@@ -10,7 +10,7 @@ import android.content.Context;
 import android.os.Looper;
 import android.util.Log;
 
-import com.parrot.freeflight.R;
+import com.example.flight.paracam.R;
 
 public final class InternetUtils
 {
