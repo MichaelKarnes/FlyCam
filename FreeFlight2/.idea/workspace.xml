@@ -5,14 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="05576755-d1c6-40a0-86db-2465982a964f" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../ParaCam/app/src/main/java/com/parrot/freeflight/tasks/CheckAcademyAvailabilityTask.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../ParaCam/app/src/main/java/com/parrot/freeflight/tasks/CheckFirmwareTask.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../ParaCam/app/src/main/java/com/parrot/freeflight/utils/FontUtils.java" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../ParaCam/app/src/main/java/com/parrot/freeflight/utils/InternetUtils.java" afterPath="$PROJECT_DIR$/../ParaCam/app/src/main/java/com/parrot/freeflight/utils/InternetUtils.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../ParaCam/app/src/main/java/com/parrot/freeflight/utils/ShareUtils.java" afterPath="$PROJECT_DIR$/../ParaCam/app/src/main/java/com/parrot/freeflight/utils/ShareUtils.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../ParaCam/app/app.iml" afterPath="$PROJECT_DIR$/../ParaCam/app/app.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../ParaCam/app/build.gradle" afterPath="$PROJECT_DIR$/../ParaCam/app/build.gradle" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../ParaCam/.idea/misc.xml" afterPath="$PROJECT_DIR$/../ParaCam/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="FreeFlight2.iws" />
@@ -1624,7 +1618,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="4" y="23" width="1277" height="1057" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
