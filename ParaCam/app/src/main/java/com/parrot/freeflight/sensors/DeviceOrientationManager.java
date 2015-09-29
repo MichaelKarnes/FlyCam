@@ -1,5 +1,6 @@
 package com.parrot.freeflight.sensors;
 
+import java.lang.Math;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -11,11 +12,10 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.FloatMath;
 import android.util.Log;
 
 public class DeviceOrientationManager
-implements Runnable
+        implements Runnable
 {
     private static final String TAG = DeviceOrientationManager.class.getSimpleName();
 
@@ -197,7 +197,7 @@ implements Runnable
             {}
         };
 
-       gyroEventListener = new SensorEventListener() {
+        gyroEventListener = new SensorEventListener() {
 
             public void onSensorChanged(SensorEvent event)
             {
@@ -335,12 +335,12 @@ implements Runnable
 
     private float[] getRotationMatrixFromOrientation(float[] o)
     {
-        float sinX = FloatMath.sin(o[1]);
-        float cosX = FloatMath.cos(o[1]);
-        float sinY = FloatMath.sin(o[2]);
-        float cosY = FloatMath.cos(o[2]);
-        float sinZ = FloatMath.sin(o[0]);
-        float cosZ = FloatMath.cos(o[0]);
+        float sinX = (float)Math.sin(o[1]);
+        float cosX = (float)Math.cos(o[1]);
+        float sinY = (float)Math.sin(o[2]);
+        float cosY = (float)Math.cos(o[2]);
+        float sinZ = (float)Math.sin(o[0]);
+        float cosZ = (float)Math.cos(o[0]);
 
         // rotation about x-axis (pitch)
         xM[0] = 1.0f;
@@ -406,7 +406,7 @@ implements Runnable
     {
         // Calculate the angular speed of the sample
         float omegaMagnitude =
-                        FloatMath.sqrt(gyroValues[0] * gyroValues[0] +
+                (float)Math.sqrt(gyroValues[0] * gyroValues[0] +
                         gyroValues[1] * gyroValues[1] +
                         gyroValues[2] * gyroValues[2]);
 
@@ -422,8 +422,8 @@ implements Runnable
         // We will convert this axis-angle representation of the delta rotation
         // into a quaternion before turning it into the rotation matrix.
         float thetaOverTwo = omegaMagnitude * timeFactor;
-        float sinThetaOverTwo = FloatMath.sin(thetaOverTwo);
-        float cosThetaOverTwo = FloatMath.cos(thetaOverTwo);
+        float sinThetaOverTwo = (float)Math.sin(thetaOverTwo);
+        float cosThetaOverTwo = (float)Math.cos(thetaOverTwo);
         deltaRotationVector[0] = sinThetaOverTwo * normValues[0];
         deltaRotationVector[1] = sinThetaOverTwo * normValues[1];
         deltaRotationVector[2] = sinThetaOverTwo * normValues[2];
@@ -446,7 +446,7 @@ implements Runnable
             magneticHeading = accMagOrientation[0];
 
             if (accMagOrientation[0] < 0) {
-               magneticHeading += Math.PI * 2;
+                magneticHeading += Math.PI * 2;
             }
         } else if (acceleroValues != null) {
 
@@ -455,42 +455,42 @@ implements Runnable
             }
 
             accMagOrientation[2] = (float) Math.atan2(acceleroValues[0],
-                    FloatMath.sqrt(acceleroValues[1]*acceleroValues[1]+acceleroValues[2]*acceleroValues[2])) * -1.f;
+                    Math.sqrt(acceleroValues[1]*acceleroValues[1]+acceleroValues[2]*acceleroValues[2])) * -1.f;
             accMagOrientation[1] = ((float) Math.atan2(acceleroValues[1],
-                    FloatMath.sqrt(acceleroValues[0]*acceleroValues[0]+acceleroValues[2]*acceleroValues[2]))) * -1.f;
+                    Math.sqrt(acceleroValues[0]*acceleroValues[0]+acceleroValues[2]*acceleroValues[2]))) * -1.f;
         }
     }
-    
-    
+
+
     private String getAvailableSensorsAsString(List<Sensor> availableSensors)
     {
-       String sensors = "";
-       
-       for (int i=0; i<availableSensors.size(); ++i) {
-           Sensor sensor = availableSensors.get(i);
-           sensors += sensor.getName() + "("+ sensor.getVendor() +", "+ sensor.getVersion()+ "), ";
-       }
-       
+        String sensors = "";
+
+        for (int i=0; i<availableSensors.size(); ++i) {
+            Sensor sensor = availableSensors.get(i);
+            sensors += sensor.getName() + "("+ sensor.getVendor() +", "+ sensor.getVersion()+ "), ";
+        }
+
         return sensors;
     }
-    
-    
-    
+
+
+
     public void run()
     {
         Looper.prepare();
         sensorHandler = new Handler();
-        
+
         registerSensorListeners();
-        
+
         Looper.loop();
-        
+
         unregisterSensorListeners();
-        
+
         sensorHandler = null;
     }
-    
-   
+
+
     class CalculateFusedOrientationTask extends TimerTask
     {
 
@@ -501,25 +501,25 @@ implements Runnable
             }
 
             float oneMinusCoeff = 1.0f - HPF_COEFFICIENT;
-           
+
             if (gyroOrientation != null && accMagOrientation != null) {
                 fusedOrientation[0] =
                         HPF_COEFFICIENT * gyroOrientation[0]
                                 + oneMinusCoeff * accMagOrientation[0];
-    
+
                 fusedOrientation[1] =
                         HPF_COEFFICIENT * gyroOrientation[1]
                                 + oneMinusCoeff * accMagOrientation[1];
-    
+
                 fusedOrientation[2] =
                         HPF_COEFFICIENT * gyroOrientation[2]
                                 + oneMinusCoeff * accMagOrientation[2];
-    
+
                 // overwrite gyro matrix and orientation with fused orientation
                 // to comensate gyro drift
                 gyroRotationMatrix = getRotationMatrixFromOrientation(fusedOrientation);
                 System.arraycopy(fusedOrientation, 0, gyroOrientation, 0, 3);
-                
+
                 if (delegate != null) {
                     delegate.onDeviceOrientationChanged(fusedOrientation, magneticHeading, magnetoAccuracy);
                 }
@@ -527,7 +527,7 @@ implements Runnable
         }
     }
 
-	public boolean isRunning() {
-		return workerThread != null && workerThread.isAlive();
-	}
+    public boolean isRunning() {
+        return workerThread != null && workerThread.isAlive();
+    }
 }
