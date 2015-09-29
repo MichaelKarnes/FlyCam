@@ -1,6 +1,7 @@
 
 package com.parrot.freeflight.utils;
 
+import java.lang.Math;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -8,7 +9,6 @@ import java.io.IOException;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.FloatMath;
 import android.util.Log;
 
 public final class ImageUtils
@@ -30,8 +30,8 @@ public final class ImageUtils
 
         Bitmap bit = BitmapFactory.decodeFile(file, options);
 
-        int h = (int) FloatMath.ceil(options.outHeight / (float) height);
-        int w = (int) FloatMath.ceil(options.outWidth / (float) width);
+        int h = (int) Math.ceil(options.outHeight / (float) height);
+        int w = (int) Math.ceil(options.outWidth / (float) width);
 
         if (h > 1 || w > 1) {
             if (h > w) {
