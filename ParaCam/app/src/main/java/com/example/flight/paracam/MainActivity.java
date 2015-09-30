@@ -11,7 +11,6 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -19,6 +18,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 
 import com.parrot.freeflight.receivers.DroneAvailabilityDelegate;
 import com.parrot.freeflight.receivers.DroneAvailabilityReceiver;
@@ -29,7 +29,6 @@ import com.parrot.freeflight.receivers.NetworkChangeReceiverDelegate;
 import com.parrot.freeflight.service.DroneControlService;
 import com.parrot.freeflight.service.intents.DroneStateManager;
 import com.parrot.freeflight.tasks.CheckDroneNetworkAvailabilityTask;
-import com.parrot.freeflight.transcodeservice.TranscodingService;
 //import com.parrot.freeflight.utils.GPSHelper;
 
 public class MainActivity extends AppCompatActivity
@@ -47,6 +46,8 @@ implements ServiceConnection,
     private BroadcastReceiver droneConnectionChangeReceiver;
 
     private CheckDroneNetworkAvailabilityTask checkDroneConnectionTask;
+
+    private Button btn_control;
 
     private boolean droneOnNetwork;
 
@@ -70,6 +71,7 @@ implements ServiceConnection,
             return;
         }
 
+        initUI();
         initBroadcastReceivers();
 
         bindService(new Intent(this, DroneControlService.class), this, Context.BIND_AUTO_CREATE);
@@ -79,8 +81,18 @@ implements ServiceConnection,
 //        }
     }
 
-    public void updateButtonState() {
+    private void initUI() {
+        btn_control = (Button) findViewById(R.id.btn_control);
+    }
+
+    public void updateUI() {
         // TODO
+        if(droneOnNetwork) {
+            btn_control.setEnabled(true);
+        }
+        else {
+            btn_control.setEnabled(false);
+        }
     }
 
     protected void initBroadcastReceivers()
@@ -96,9 +108,6 @@ implements ServiceConnection,
         broadcastManager.registerReceiver(droneStateReceiver, new IntentFilter(
                 DroneStateManager.ACTION_DRONE_STATE_CHANGED));
 
-        IntentFilter mediaReadyFilter = new IntentFilter();
-        mediaReadyFilter.addAction(DroneControlService.NEW_MEDIA_IS_AVAILABLE_ACTION);
-        mediaReadyFilter.addAction(TranscodingService.NEW_MEDIA_IS_AVAILABLE_ACTION);
         broadcastManager.registerReceiver(droneConnectionChangeReceiver, new IntentFilter(DroneControlService.DRONE_CONNECTION_CHANGED_ACTION));
 
         registerReceiver(networkChangeReceiver, new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
@@ -149,7 +158,7 @@ implements ServiceConnection,
     {
         droneOnNetwork = false;
 
-        updateButtonState();
+        updateUI();
     }
 
     protected boolean onStartFreeflight() {
@@ -172,7 +181,7 @@ implements ServiceConnection,
             checkDroneConnectivity();
         } else {
             droneOnNetwork = false;
-            updateButtonState();
+            updateUI();
         }
     }
 
@@ -197,7 +206,7 @@ implements ServiceConnection,
             Log.d(TAG, "AR.Drone connection [CONNECTED]");
             this.droneOnNetwork = droneOnNetwork;
 
-            updateButtonState();
+            updateUI();
         } else {
             Log.d(TAG, "AR.Drone connection [DISCONNECTED]");
         }
