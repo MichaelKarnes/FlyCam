@@ -1,13 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 22
+    compileSdkVersion 23
     buildToolsVersion "23.0.1"
+    useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         applicationId "com.example.flight.paracam"
         minSdkVersion 15
-        targetSdkVersion 22
+        targetSdkVersion 23
         versionCode 1
         versionName "1.0"
     }
@@ -19,11 +20,11 @@ android {
     }
     sourceSets.main {
         jni.srcDirs = []
-        jniLibs.srcDir 'src/main/jniLibs'
+        jniLibs.srcDir 'src/main/jniLifbs'
     }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:22.1.0'
+    compile 'com.android.support:appcompat-v7:23.0.1'
 }
