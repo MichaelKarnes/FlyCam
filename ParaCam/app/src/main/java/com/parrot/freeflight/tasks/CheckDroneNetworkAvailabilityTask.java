@@ -15,7 +15,7 @@ import com.parrot.ftp.FTPClient;
 
 public class CheckDroneNetworkAvailabilityTask extends AsyncTask<Context, Integer, Boolean> {
 
-	private static final String TAG = "CheckDroneNetworkAvailability";
+	private static final String TAG = "CheckDroneNetworkAvail";
 	private FTPClient ftpClient = null;
 	
 	@Override
