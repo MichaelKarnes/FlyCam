@@ -8,9 +8,11 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/control_button_text"
-        android:id="@+id/btn_control"
+        android:text="@string/fly_button_text"
+        android:id="@+id/btn_fly"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:enabled="false" />
+        android:enabled="false"
+        android:onClick="clickFunc"
+        />
 </RelativeLayout>
