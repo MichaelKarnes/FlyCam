@@ -56,8 +56,8 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
 
     private void initListeners() {
             takeoff_btn.setOnClickListener(this);
-            left_stick.setOnJoystickMoveListener(this, (long) 1);
-            right_stick.setOnJoystickMoveListener(this, (long) 1);
+            left_stick.setOnJoystickMoveListener(this, (long) 250);
+            right_stick.setOnJoystickMoveListener(this, (long) 250);
     }
 
     public void onClick(View v){
@@ -72,6 +72,13 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
             onLeftJoystickMove(angle, power, direction);
         if (v.getId()==R.id.rightstick)
             onRightJoystickMove(angle, power, direction);
+    }
+
+    public void setUIEnabled(Boolean b){
+        Log.d("ControllerActivityBase", "Enabling the buttons");
+        takeoff_btn.setEnabled(b);
+        left_stick.setEnabled(b);
+        right_stick.setEnabled(b);
     }
 
     protected void onTakeOff(){
