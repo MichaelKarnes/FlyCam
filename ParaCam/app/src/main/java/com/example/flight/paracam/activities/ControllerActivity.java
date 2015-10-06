@@ -397,13 +397,19 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         double horizontal = (Math.sin(radian_angle) * power)/ 100;
 
         mService.setProgressiveCommandEnabled(true);
-        mService.setProgressiveCommandCombinedYawEnabled(true);
 
         if (mService != null) {
             mService.setRoll((float) horizontal);
             mService.setPitch((float) vertical);
         }
 
+    }
+
+    @Override
+    public void onJoystickReleased(View v) {
+        if(v.getId() == R.id.rightstick) {
+            mService.setProgressiveCommandEnabled(false);
+        }
     }
 
     @Override

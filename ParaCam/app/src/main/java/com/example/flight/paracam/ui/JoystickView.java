@@ -159,6 +159,8 @@ public class JoystickView extends View implements Runnable {
 			xPosition = (int) centerX;
 			yPosition = (int) centerY;
 			thread.interrupt();
+			if (onJoystickMoveListener != null)
+				onJoystickMoveListener.onJoystickReleased(v);
 			//if (onJoystickMoveListener != null)
 				//onJoystickMoveListener.onJoystickValueChanged(v, getAngle(), getPower(), getDirection());
 		}
@@ -248,6 +250,8 @@ public class JoystickView extends View implements Runnable {
 
 	public static interface OnJoystickMoveListener {
 		public void onJoystickValueChanged(View v, int angle, int power, int direction);
+
+		public void onJoystickReleased(View v);
 	}
 
 	@Override

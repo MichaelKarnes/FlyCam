@@ -122,6 +122,11 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
             onRightJoystickMove(angle, power, direction);
     }
 
+    public void onJoystickReleased(View v){
+        // left unimplemented
+        return;
+    }
+
     public void setUIEnabled(Boolean b){
         takeoff_btn.setEnabled(b);
         left_stick.setEnabled(b);
