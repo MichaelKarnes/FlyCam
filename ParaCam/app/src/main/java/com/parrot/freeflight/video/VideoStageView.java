@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -33,10 +34,14 @@ implements
 	public VideoStageView(Context context) {
 		super(context);	
 	
+		init(context);
+	}
+
+	private void init(Context context){
 		getHolder().addCallback(this);
-		
-		 fpsPaint.setTextSize(30);
-		 fpsPaint.setColor(Color.RED);
+
+		fpsPaint.setTextSize(30);
+		fpsPaint.setColor(Color.RED);
 	}
 
 	@Override

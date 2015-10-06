@@ -1,6 +1,7 @@
 package com.example.flight.paracam.activities;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
@@ -27,6 +29,9 @@ import java.lang.Math;
 import com.example.flight.paracam.DroneService;
 import com.example.flight.paracam.MainUI;
 import com.example.flight.paracam.R;
+import com.parrot.freeflight.drone.DroneAcademyMediaListener;
+import com.parrot.freeflight.drone.DroneProxy;
+import com.parrot.freeflight.drone.NavData;
 import com.parrot.freeflight.receivers.DroneAvailabilityDelegate;
 import com.parrot.freeflight.receivers.DroneAvailabilityReceiver;
 import com.parrot.freeflight.receivers.DroneConnectionChangeReceiverDelegate;
@@ -38,12 +43,16 @@ import com.parrot.freeflight.receivers.NetworkChangeReceiverDelegate;
 import com.parrot.freeflight.service.DroneControlService;
 import com.parrot.freeflight.service.intents.DroneStateManager;
 import com.parrot.freeflight.tasks.CheckDroneNetworkAvailabilityTask;
+import com.parrot.freeflight.receivers.DroneBatteryChangedReceiver;
+import com.parrot.freeflight.receivers.DroneBatteryChangedReceiverDelegate;
+
+import android.support.v4.content.LocalBroadcastManager;
 
 public class ControllerActivity extends ControllerActivityBase implements ServiceConnection,
         DroneAvailabilityDelegate,
         NetworkChangeReceiverDelegate,
         DroneConnectionChangeReceiverDelegate,
-        DroneReadyReceiverDelegate {
+        DroneReadyReceiverDelegate, DroneBatteryChangedReceiverDelegate {
 
     public static final String TAG = ControllerActivity.class.getSimpleName();
 
@@ -57,6 +66,9 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     private CheckDroneNetworkAvailabilityTask checkDroneConnectionTask;
 
     private boolean droneOnNetwork;
+    private DroneBatteryChangedReceiver droneBatteryReceiver;
+    private ControllerActivityBase ui;
+
 
     static {
         System.loadLibrary("avutil");
@@ -79,6 +91,8 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
             return;
         }
 
+        droneBatteryReceiver = new DroneBatteryChangedReceiver(this);
+        ui = new ControllerActivityBase();
         Context con = getApplicationContext();
 
         initBroadcastReceivers();
@@ -92,6 +106,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 //        if (GPSHelper.deviceSupportGPS(this) && !GPSHelper.isGpsOn(this)) {
 //            onNotifyAboutGPSDisabled();
 //        }
+        //droneProxy = DroneProxy.getInstance(getApplicationContext());
     }
 
     public void clickFunc(View view) {
@@ -130,6 +145,8 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         networkChangeReceiver = new NetworkChangeReceiver(this);
         droneConnectionChangeReceiver = new DroneConnectionChangedReceiver(this);
         droneReadyReceiver = new DroneReadyReceiver(this);
+        LocalBroadcastManager localBroadcastMgr = LocalBroadcastManager.getInstance(getApplicationContext());
+        localBroadcastMgr.registerReceiver(droneBatteryReceiver, new IntentFilter(DroneControlService.DRONE_BATTERY_CHANGED_ACTION));
     }
 
     private void registerBroadcastReceivers()
@@ -172,6 +189,9 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         stopTasks();
     }
 
+    public void onDroneBatteryChanged(int value) {
+        setBatteryValue(value);
+    }
 
     @Override
     protected void onResume()
@@ -189,7 +209,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     private void disableAllButtons()
     {
         droneOnNetwork = false;
-
         updateUI();
     }
 
@@ -207,8 +226,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
     public void onNetworkChanged(NetworkInfo info)
     {
-        Log.d(TAG, "Network state has changed. State is: " + (info.isConnected()?"CONNECTED":"DISCONNECTED"));
-
+        Log.d(TAG, "Network state has changed. State is: " + (info.isConnected() ? "CONNECTED" : "DISCONNECTED"));
         if (mService != null && info.isConnected()) {
             checkDroneConnectivity();
         } else {
@@ -281,6 +299,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     {
         Log.d(TAG, "DroneService CONNECTED");
         mService = (DroneService)((DroneControlService.LocalBinder) service).getService();
+        mService.setMagnetoEnabled(true);
 
         if(mService != null)
             mService.requestDroneStatus();
@@ -289,7 +308,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
     public void onServiceDisconnected(ComponentName name)
     {
-        // Left unimplemented
+        mService = null;
     }
 
     private boolean taskRunning(AsyncTask<?,?,?> checkMediaTask2)
@@ -356,26 +375,40 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     }
 
     @Override
+    protected void onLand() { mService.triggerTakeOff(); }
+
+    @Override
     protected void onLeftJoystickMove(int angle, int power, int direction){
         double radian_angle = (angle*Math.PI)/180;
         double vertical = (Math.cos(radian_angle)*power)/100;
         double horizontal = (Math.sin(radian_angle)*power)/100;
+
         if (mService != null){
             mService.setGaz((float) vertical);
             mService.setYaw((float) horizontal);
         }
-        //Log.d("ControllerActivityBase", "Vertical:"+vertical+","+"Horizontal:"+horizontal);
+
     }
 
     @Override
     protected void onRightJoystickMove(int angle, int power, int direction){
         double radian_angle = (angle*Math.PI)/180;
         double vertical = (Math.cos(radian_angle)*power)/100;
-        double horizontal = (Math.sin(radian_angle) * power)/100;
+        double horizontal = (Math.sin(radian_angle) * power)/ 100;
+
+        mService.setProgressiveCommandEnabled(true);
+        mService.setProgressiveCommandCombinedYawEnabled(true);
+
         if (mService != null) {
-            mService.moveRight((float) Math.abs(horizontal));
-            mService.moveForward((float) Math.abs(vertical));
-            //Log.d("ControllerActivityBase", "Vertical:" + vertical + "," + "Horizontal:" + horizontal);
+            mService.setRoll((float) horizontal);
+            mService.setPitch((float) vertical);
         }
+
     }
+
+    @Override
+    protected void onCapturePhoto(){
+        mService.takePhoto();
+    }
+
 }

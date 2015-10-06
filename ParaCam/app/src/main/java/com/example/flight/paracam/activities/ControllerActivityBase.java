@@ -1,5 +1,8 @@
 package com.example.flight.paracam.activities;
 
+import android.app.Activity;
+import android.opengl.GLSurfaceView;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,9 +10,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.VideoView;
 
 import com.example.flight.paracam.R;
 import com.example.flight.paracam.ui.JoystickView;
+import com.parrot.freeflight.video.VideoStageRenderer;
+import com.parrot.freeflight.video.VideoStageView;
 
 public class ControllerActivityBase extends AppCompatActivity
 implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
@@ -17,6 +25,22 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
     private Button takeoff_btn;
     private JoystickView left_stick;
     private JoystickView right_stick;
+    private ProgressBar battery_status;
+    private TextView batteryPer;
+    private Button land_btn;
+    private Button follow_btn;
+    private Button emergency_btn;
+    private Button capture_photo;
+    private VideoView vid_view;
+
+    private GLSurfaceView glView;
+    private VideoStageView canvasView;
+    private VideoStageRenderer renderer;
+    private Activity context;
+
+
+    private int mProgressStatus = 0;
+    private Handler mHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +49,11 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
 
         initUI();
         initListeners();
+
+        context = this;
+        canvasView = null;
+        glView = new GLSurfaceView(context);
+        renderer = new VideoStageRenderer(context, null);
     }
 
     @Override
@@ -52,10 +81,21 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
         takeoff_btn = (Button) findViewById(R.id.takeoffbutton);
         left_stick = (JoystickView) findViewById(R.id.leftstick);
         right_stick = (JoystickView) findViewById(R.id.rightstick);
+        battery_status = (ProgressBar) findViewById(R.id.batteryStat);
+        batteryPer = (TextView) findViewById(R.id.batteryPercent);
+        follow_btn = (Button) findViewById(R.id.follow_button);
+        emergency_btn = (Button) findViewById(R.id.emergency_btn);
+        land_btn = (Button) findViewById(R.id.land_button);
+        capture_photo = (Button) findViewById(R.id.capture_photo);
+        vid_view = (VideoView) findViewById(R.id.videoView);
     }
 
     private void initListeners() {
             takeoff_btn.setOnClickListener(this);
+            follow_btn.setOnClickListener(this);
+            emergency_btn.setOnClickListener(this);
+            land_btn.setOnClickListener(this);
+            capture_photo.setOnClickListener(this);
             left_stick.setOnJoystickMoveListener(this, (long) 250);
             right_stick.setOnJoystickMoveListener(this, (long) 250);
     }
@@ -64,6 +104,14 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
         switch (v.getId()){
             case R.id.takeoffbutton:
                 onTakeOff();
+            case R.id.emergency_btn:
+                onEmergency();
+            case R.id.land_button:
+                onLand();
+            case R.id.follow_button:
+                onFollow();
+            case R.id.capture_photo:
+                onCapturePhoto();
         }
     }
 
@@ -75,10 +123,13 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
     }
 
     public void setUIEnabled(Boolean b){
-        Log.d("ControllerActivityBase", "Enabling the buttons");
         takeoff_btn.setEnabled(b);
         left_stick.setEnabled(b);
         right_stick.setEnabled(b);
+        follow_btn.setEnabled(b);
+        emergency_btn.setEnabled(b);
+        land_btn.setEnabled(b);
+        capture_photo.setEnabled(b);
     }
 
     protected void onTakeOff(){
@@ -91,5 +142,26 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
 
     protected void onRightJoystickMove(int angle, int power, int direction){
 
+    }
+
+    protected void onEmergency(){
+
+    }
+
+    protected void onLand(){
+
+    }
+
+    protected void onFollow(){
+
+    }
+
+    protected void onCapturePhoto(){
+
+    }
+
+    public void setBatteryValue(int value){
+        battery_status.setProgress(value);
+        batteryPer.setText(value + " %");
     }
 }
