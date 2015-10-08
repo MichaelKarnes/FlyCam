@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="libs1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/FreeFlight2/app/libs/android-support-v13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/FreeFlight2/app/libs/com.sony.rdis.receiver.utility-20111206.jar!/" />
+      <root url="jar://$PROJECT_DIR$/FreeFlight2/app/libs/com.sony.rdis.receiver-20111206.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
