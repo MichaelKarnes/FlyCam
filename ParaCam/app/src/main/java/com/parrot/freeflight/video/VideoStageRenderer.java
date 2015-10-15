@@ -75,8 +75,16 @@ public class VideoStageRenderer implements Renderer {
 	public VideoStageRenderer(Context context, Bitmap initialTexture)
 	{
 		bgSprite = new GLBGVideoSprite(context.getResources());
+		if(bgSprite==null){
+			Log.d("VideoStageRenderer.java", "NULL0");
+		}
+
 		bgSprite.setAlpha(1.0f);
-		
+
+		if(bgSprite==null){
+			Log.d("VideoStageRenderer.java", "NULL1");
+		}
+
 		idSpriteMap = new Hashtable<Integer, Sprite>();
 		sprites = new ArrayList<Sprite>(4);
 	}
