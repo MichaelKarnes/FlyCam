@@ -1,6 +1,7 @@
 package com.example.flight.paracam.activities;
 
 import android.app.Activity;
+import android.graphics.Canvas;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -8,12 +9,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceHolder;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import com.example.flight.paracam.HudViewController;
 import com.example.flight.paracam.R;
 import com.example.flight.paracam.ui.JoystickView;
 import com.parrot.freeflight.video.VideoStageRenderer;
@@ -31,30 +35,149 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
     private Button follow_btn;
     private Button emergency_btn;
     private Button capture_photo;
-    private VideoView vid_view;
+//    private DrawThread drawThread;
 
-    private GLSurfaceView glView;
-    private VideoStageView canvasView;
-    private VideoStageRenderer renderer;
+    //    private GLSurfaceView glView;
+//    private VideoStageView canvasView;
+//    private VideoStageRenderer renderer;
     private Activity context;
 
+    private HudViewController view;
 
     private int mProgressStatus = 0;
     private Handler mHandler = new Handler();
+
+    long timeNow;
+    long timePrev = 0;
+    long timePrevFrame = 0;
+    long timeDelta;
+
+//    private Runnable drawRoutine = new Runnable() {
+//        @Override
+//        public void run() {
+//            //limit frame rate to max 60fps
+//            timeNow = System.currentTimeMillis();
+//            timeDelta = timeNow - timePrevFrame;
+//            if ( timeDelta < 33) {
+//                try {
+//                    Thread.sleep(16 - timeDelta);
+//                }
+//                catch(InterruptedException e) {
+//
+//                }
+//            }
+//
+//            timePrevFrame = System.currentTimeMillis();
+//
+//            try {
+//                renderer.updateVideoFrame();
+//                //c = surfaceHolder.lockCanvas(null);
+//
+////                synchronized (surfaceHolder) {
+////                    view.onDraw(c);
+////                }
+//            } finally {
+////                if (c != null) {
+////                    surfaceHolder.unlockCanvasAndPost(c);
+////                }
+//            }
+//        }
+//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ui_controller);
 
+        context = this;
+
         initUI();
         initListeners();
 
-        context = this;
-        canvasView = null;
-        glView = new GLSurfaceView(context);
-        renderer = new VideoStageRenderer(context, null);
+
     }
+
+    protected void initHudController() {
+        view = new HudViewController(this, false);
+    }
+
+//    class DrawThread extends Thread {
+//        private SurfaceHolder surfaceHolder;
+//        private GLSurfaceView view;
+//        private boolean run = false;
+//
+//        public DrawThread(SurfaceHolder surfaceHolder, GLSurfaceView gameView) {
+//            this.surfaceHolder = surfaceHolder;
+//            this.view = gameView;
+//    }
+//
+//        public void setRunning(boolean run) {
+//            this.run = run;
+//        }
+//
+//        public SurfaceHolder getSurfaceHolder() {
+//            return surfaceHolder;
+//        }
+//
+//        @Override
+//        public void run() {
+//            Canvas c;
+//            while (run) {
+//                c = null;
+//
+//                //limit frame rate to max 60fps
+//                timeNow = System.currentTimeMillis();
+//                timeDelta = timeNow - timePrevFrame;
+//                if ( timeDelta < 16) {
+//                    try {
+//                        Thread.sleep(16 - timeDelta);
+//                    }
+//                    catch(InterruptedException e) {
+//
+//                    }
+//                }
+//
+//                timePrevFrame = System.currentTimeMillis();
+//
+//                try {
+//                    renderer.updateVideoFrame();
+//                    c = surfaceHolder.lockCanvas(null);
+//
+//                    synchronized (surfaceHolder) {
+//                        if (renderer != null) {
+//                            renderer.onDrawFrame(c);
+//                        }
+//                    }
+//                } finally {
+//                    if (c != null) {
+//                        surfaceHolder.unlockCanvasAndPost(c);
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+//    protected void startDrawThread() {
+//        drawThread = new DrawThread(glView.getHolder(), glView );
+//        drawThread.start();
+//    }
+//
+//    protected void initCanvasView() {
+//        canvasView = new VideoStageView(context);
+//        canvasView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+//        canvasView.setRenderer(renderer);
+//        setContentView(canvasView);
+//    }
+//
+//    protected void initGLView() {
+//        renderer = new VideoStageRenderer(context, null);
+//        glView = new GLSurfaceView(context);
+//        glView.setEGLContextClientVersion(2);
+//        glView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+//        glView.setRenderer(renderer);
+//        glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+//        setContentView(glView);
+//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -87,7 +210,9 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
         emergency_btn = (Button) findViewById(R.id.emergency_btn);
         land_btn = (Button) findViewById(R.id.land_button);
         capture_photo = (Button) findViewById(R.id.capture_photo);
-        vid_view = (VideoView) findViewById(R.id.videoView);
+        //vid_view = (GLSurfaceView) findViewById(R.id.videoView);
+        //vid_view.setEGLContextClientVersion(2);
+
     }
 
     private void initListeners() {

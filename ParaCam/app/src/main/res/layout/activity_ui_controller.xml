@@ -108,14 +108,24 @@
         android:layout_alignLeft="@+id/follow_button"
         android:layout_alignStart="@+id/follow_button" />
 
-    <VideoView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/videoView"
-        android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/takeoffbutton"
-        android:layout_above="@+id/leftstick"
-        android:layout_toLeftOf="@+id/follow_button"
-        android:layout_toStartOf="@+id/follow_button" />
+    <!--<android.opengl.GLSurfaceView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/videoView"-->
+        <!--android:layout_alignParentTop="true"-->
+        <!--android:layout_toRightOf="@+id/takeoffbutton"-->
+        <!--android:layout_above="@+id/leftstick"-->
+        <!--android:layout_toLeftOf="@+id/follow_button"-->
+        <!--android:layout_toStartOf="@+id/follow_button" />-->
+
+    <!--<com.parrot.freeflight.video.VideoStageView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/canvasView"-->
+        <!--android:layout_alignParentTop="true"-->
+        <!--android:layout_toRightOf="@+id/takeoffbutton"-->
+        <!--android:layout_above="@+id/leftstick"-->
+        <!--android:layout_toLeftOf="@+id/follow_button"-->
+        <!--android:layout_toStartOf="@+id/follow_button" />-->
 
 </RelativeLayout>

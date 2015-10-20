@@ -270,6 +270,19 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         // TODO
         Log.d(TAG, "Drone is READYYYYYYYYYYYYYYYYYYYYY");
         setUIEnabled(true);
+
+        mService.record();
+
+        //initCanvasView();
+        //initGLView();
+        initHudController();
+
+//        try {
+//            Thread.sleep(50, 0);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+        //startDrawThread();
     }
 
     @SuppressLint("NewApi")
