@@ -100,10 +100,10 @@ implements
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
 			int height) 
 	{
-		renderer.onSurfaceChanged((Canvas)null, getWidth(), getHeight());		
+		renderer.onSurfaceChanged((Canvas)null, getWidth(), getHeight());
 	}
 
-	public void surfaceCreated(SurfaceHolder holder) 
+	public void surfaceCreated(SurfaceHolder holder)
 	{
        invalidateThread = new DrawThread(getHolder(), this);
        invalidateThread.setRunning(true);

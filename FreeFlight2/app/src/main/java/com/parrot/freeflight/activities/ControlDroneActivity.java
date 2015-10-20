@@ -226,8 +226,8 @@ public class ControlDroneActivity
         
         settings.setFirstLaunch(false);
         
-        view.setCameraButtonEnabled(false);
-        view.setRecordButtonEnabled(false);
+//        view.setCameraButtonEnabled(false);
+//        view.setRecordButtonEnabled(false);
     }
     
     private void applyHandDependendTVControllers()
@@ -551,146 +551,146 @@ public class ControlDroneActivity
 
     private void initListeners()
     {
-        view.setSettingsButtonClickListener(new OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                showSettingsDialog();
-            }
-        });
-
-        view.setBtnCameraSwitchClickListener(new OnClickListener()
-        {
-
-            public void onClick(View v)
-            {
-                if (droneControlService != null) {
-                    droneControlService.switchCamera();
-                }
-            }
-        });
-
-        view.setBtnTakeOffClickListener(new OnClickListener()
-        {
-
-            public void onClick(View v)
-            {
-                if (droneControlService != null) {
-                    droneControlService.triggerTakeOff();
-                }
-            }
-        });
-
-        view.setBtnEmergencyClickListener(new OnClickListener()
-        {
-
-            public void onClick(View v)
-            {
-                if (droneControlService != null) {
-                    droneControlService.triggerEmergency();
-                }
-            }
-
-        });
-
-        view.setBtnPhotoClickListener(new OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                if (droneControlService != null) {
-                    onTakePhoto();
-                }
-            }
-        });
-
-        view.setBtnRecordClickListener(new OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                onRecord();
-            }
-        });
-
-        view.setBtnBackClickListener(new OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                finish();
-            }
-        });
-
-        view.setDoubleTapClickListener(new OnDoubleTapListener()
-        {
-
-            public boolean onSingleTapConfirmed(MotionEvent e)
-            {
-                // Left unimplemented
-                return false;
-            }
-
-            public boolean onDoubleTapEvent(MotionEvent e)
-            {
-                // Left unimplemented
-                return false;
-            }
-
-            public boolean onDoubleTap(MotionEvent e)
-            {
-                if (settings.isFlipEnabled() && droneControlService != null) {
-                    droneControlService.doLeftFlip();
-                    return true;
-                }
-
-                return false;
-            }
-        });
+//        view.setSettingsButtonClickListener(new OnClickListener()
+//        {
+//            public void onClick(View v)
+//            {
+//                showSettingsDialog();
+//            }
+//        });
+//
+//        view.setBtnCameraSwitchClickListener(new OnClickListener()
+//        {
+//
+//            public void onClick(View v)
+//            {
+//                if (droneControlService != null) {
+//                    droneControlService.switchCamera();
+//                }
+//            }
+//        });
+//
+//        view.setBtnTakeOffClickListener(new OnClickListener()
+//        {
+//
+//            public void onClick(View v)
+//            {
+//                if (droneControlService != null) {
+//                    droneControlService.triggerTakeOff();
+//                }
+//            }
+//        });
+//
+//        view.setBtnEmergencyClickListener(new OnClickListener()
+//        {
+//
+//            public void onClick(View v)
+//            {
+//                if (droneControlService != null) {
+//                    droneControlService.triggerEmergency();
+//                }
+//            }
+//
+//        });
+//
+//        view.setBtnPhotoClickListener(new OnClickListener()
+//        {
+//            public void onClick(View v)
+//            {
+//                if (droneControlService != null) {
+//                    onTakePhoto();
+//                }
+//            }
+//        });
+//
+//        view.setBtnRecordClickListener(new OnClickListener()
+//        {
+//            public void onClick(View v)
+//            {
+//                onRecord();
+//            }
+//        });
+//
+//        view.setBtnBackClickListener(new OnClickListener()
+//        {
+//            public void onClick(View v)
+//            {
+//                finish();
+//            }
+//        });
+//
+//        view.setDoubleTapClickListener(new OnDoubleTapListener()
+//        {
+//
+//            public boolean onSingleTapConfirmed(MotionEvent e)
+//            {
+//                // Left unimplemented
+//                return false;
+//            }
+//
+//            public boolean onDoubleTapEvent(MotionEvent e)
+//            {
+//                // Left unimplemented
+//                return false;
+//            }
+//
+//            public boolean onDoubleTap(MotionEvent e)
+//            {
+//                if (settings.isFlipEnabled() && droneControlService != null) {
+//                    droneControlService.doLeftFlip();
+//                    return true;
+//                }
+//
+//                return false;
+//            }
+//        });
     }
 
     
     private void initVirtualJoysticks(JoystickType leftType, JoystickType rightType, boolean isLeftHanded)
     {
-        JoystickBase joystickLeft = (!isLeftHanded ? view.getJoystickLeft() : view.getJoystickRight());
-        JoystickBase joystickRight = (!isLeftHanded ? view.getJoystickRight() : view.getJoystickLeft());
-
-        ApplicationSettings settings = getSettings();
-
-        if (leftType == JoystickType.ANALOGUE) {
-            if (joystickLeft == null || !(joystickLeft instanceof AnalogueJoystick) || joystickLeft.isAbsoluteControl() != settings.isAbsoluteControlEnabled()) {
-                joystickLeft = JoystickFactory.createAnalogueJoystick(this, settings.isAbsoluteControlEnabled(), rollPitchListener);
-            } else {
-                joystickLeft.setOnAnalogueChangedListener(rollPitchListener);
-                joystickRight.setAbsolute(settings.isAbsoluteControlEnabled());
-            }
-        } else if (leftType == JoystickType.ACCELERO) {
-            if (joystickLeft == null || !(joystickLeft instanceof AcceleroJoystick) || joystickLeft.isAbsoluteControl() != settings.isAbsoluteControlEnabled()) {
-                joystickLeft = JoystickFactory.createAcceleroJoystick(this, settings.isAbsoluteControlEnabled(), rollPitchListener);
-            } else {
-                joystickLeft.setOnAnalogueChangedListener(rollPitchListener);
-                joystickRight.setAbsolute(settings.isAbsoluteControlEnabled());
-            }
-        }
-
-        if (rightType == JoystickType.ANALOGUE) {
-            if (joystickRight == null || !(joystickRight instanceof AnalogueJoystick) || joystickRight.isAbsoluteControl() != settings.isAbsoluteControlEnabled()) {
-                joystickRight = JoystickFactory.createAnalogueJoystick(this, false, gazYawListener);
-            } else {
-                joystickRight.setOnAnalogueChangedListener(gazYawListener);
-                joystickRight.setAbsolute(false);
-            }
-        } else if (rightType == JoystickType.ACCELERO) {
-            if (joystickRight == null || !(joystickRight instanceof AcceleroJoystick) || joystickRight.isAbsoluteControl() != settings.isAbsoluteControlEnabled()) {
-                joystickRight = JoystickFactory.createAcceleroJoystick(this, false, gazYawListener);
-            } else {
-                joystickRight.setOnAnalogueChangedListener(gazYawListener);
-                joystickRight.setAbsolute(false);
-            }
-        }
-
-        if (!isLeftHanded) {
-            view.setJoysticks(joystickLeft, joystickRight);
-        } else {
-            view.setJoysticks(joystickRight, joystickLeft);
-        }
+//        JoystickBase joystickLeft = (!isLeftHanded ? view.getJoystickLeft() : view.getJoystickRight());
+//        JoystickBase joystickRight = (!isLeftHanded ? view.getJoystickRight() : view.getJoystickLeft());
+//
+//        ApplicationSettings settings = getSettings();
+//
+//        if (leftType == JoystickType.ANALOGUE) {
+//            if (joystickLeft == null || !(joystickLeft instanceof AnalogueJoystick) || joystickLeft.isAbsoluteControl() != settings.isAbsoluteControlEnabled()) {
+//                joystickLeft = JoystickFactory.createAnalogueJoystick(this, settings.isAbsoluteControlEnabled(), rollPitchListener);
+//            } else {
+//                joystickLeft.setOnAnalogueChangedListener(rollPitchListener);
+//                joystickRight.setAbsolute(settings.isAbsoluteControlEnabled());
+//            }
+//        } else if (leftType == JoystickType.ACCELERO) {
+//            if (joystickLeft == null || !(joystickLeft instanceof AcceleroJoystick) || joystickLeft.isAbsoluteControl() != settings.isAbsoluteControlEnabled()) {
+//                joystickLeft = JoystickFactory.createAcceleroJoystick(this, settings.isAbsoluteControlEnabled(), rollPitchListener);
+//            } else {
+//                joystickLeft.setOnAnalogueChangedListener(rollPitchListener);
+//                joystickRight.setAbsolute(settings.isAbsoluteControlEnabled());
+//            }
+//        }
+//
+//        if (rightType == JoystickType.ANALOGUE) {
+//            if (joystickRight == null || !(joystickRight instanceof AnalogueJoystick) || joystickRight.isAbsoluteControl() != settings.isAbsoluteControlEnabled()) {
+//                joystickRight = JoystickFactory.createAnalogueJoystick(this, false, gazYawListener);
+//            } else {
+//                joystickRight.setOnAnalogueChangedListener(gazYawListener);
+//                joystickRight.setAbsolute(false);
+//            }
+//        } else if (rightType == JoystickType.ACCELERO) {
+//            if (joystickRight == null || !(joystickRight instanceof AcceleroJoystick) || joystickRight.isAbsoluteControl() != settings.isAbsoluteControlEnabled()) {
+//                joystickRight = JoystickFactory.createAcceleroJoystick(this, false, gazYawListener);
+//            } else {
+//                joystickRight.setOnAnalogueChangedListener(gazYawListener);
+//                joystickRight.setAbsolute(false);
+//            }
+//        }
+//
+//        if (!isLeftHanded) {
+//            view.setJoysticks(joystickLeft, joystickRight);
+//        } else {
+//            view.setJoysticks(joystickRight, joystickLeft);
+//        }
     }
 
     @Override
@@ -805,8 +805,8 @@ public class ControlDroneActivity
         runTranscoding();
         
         if (droneControlService.getMediaDir() != null) {
-            view.setRecordButtonEnabled(true);
-            view.setCameraButtonEnabled(true);
+//            view.setRecordButtonEnabled(true);
+//            view.setCameraButtonEnabled(true);
         }
     }
 
@@ -815,7 +815,7 @@ public class ControlDroneActivity
     public void onDroneFlyingStateChanged(boolean flying)
     {
         this.flying = flying;
-        view.setIsFlying(flying);
+//        view.setIsFlying(flying);
 
         updateBackButtonState();
     }
@@ -824,9 +824,9 @@ public class ControlDroneActivity
     public void onDroneRecordReadyChanged(boolean ready)
     {
         if (!recording) {
-            view.setRecordButtonEnabled(ready);
+//            view.setRecordButtonEnabled(ready);
         } else {
-            view.setRecordButtonEnabled(true);
+//            view.setRecordButtonEnabled(true);
         }
     }
 
@@ -851,7 +851,7 @@ public class ControlDroneActivity
 
     public void onCameraReadyChanged(boolean ready)
     {
-        view.setCameraButtonEnabled(ready);
+//        view.setCameraButtonEnabled(ready);
         cameraReady = ready;
         
         updateBackButtonState();
@@ -860,7 +860,7 @@ public class ControlDroneActivity
 
     public void onDroneEmergencyChanged(int code)
     {
-        view.setEmergency(code);
+//        view.setEmergency(code);
 
         if (code == NavData.ERROR_STATE_EMERGENCY_VBAT_LOW || code == NavData.ERROR_STATE_ALERT_VBAT_LOW) {
             playEmergencySound();
@@ -871,28 +871,28 @@ public class ControlDroneActivity
         controlLinkAvailable = (code != NavData.ERROR_STATE_NAVDATA_CONNECTION); 
         
         if (!controlLinkAvailable) {
-            view.setRecordButtonEnabled(false);
-            view.setCameraButtonEnabled(false);
-            view.setSwitchCameraButtonEnabled(false);
+//            view.setRecordButtonEnabled(false);
+//            view.setCameraButtonEnabled(false);
+//            view.setSwitchCameraButtonEnabled(false);
         } else {
-            view.setSwitchCameraButtonEnabled(true);
-            view.setRecordButtonEnabled(true);
-            view.setCameraButtonEnabled(true);
+//            view.setSwitchCameraButtonEnabled(true);
+//            view.setRecordButtonEnabled(true);
+//            view.setCameraButtonEnabled(true);
         }
         
         updateBackButtonState();
         
-        view.setEmergencyButtonEnabled(!NavData.isEmergency(code));
+        //view.setEmergencyButtonEnabled(!NavData.isEmergency(code));
     }
     
     public void onDroneBatteryChanged(int value)
     {
-        view.setBatteryValue(value);
+        //view.setBatteryValue(value);
     }
 
     public void onWifiSignalStrengthChanged(int strength)
     {
-        view.setWifiValue(strength);
+        //view.setWifiValue(strength);
     }
 
 
@@ -904,9 +904,9 @@ public class ControlDroneActivity
         prevRecording = this.recording;
         this.recording = recording;
 
-        view.setRecording(recording);
-        view.setUsbIndicatorEnabled(usbActive);
-        view.setUsbRemainingTime(remaining);
+        //view.setRecording(recording);
+        //view.setUsbIndicatorEnabled(usbActive);
+        //view.setUsbRemainingTime(remaining);
 
         updateBackButtonState();
 
@@ -927,7 +927,7 @@ public class ControlDroneActivity
 
     protected void showSettingsDialog()
     {
-        view.setSettingsButtonEnabled(false);
+        //view.setSettingsButtonEnabled(false);
         
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment prev = getSupportFragmentManager().findFragmentByTag("settings");
@@ -1005,7 +1005,7 @@ public class ControlDroneActivity
         }
 
         // TODO we have to hide touch controllers for google TV
-        view.setInterfaceOpacity(this.isGoogleTV ? 0 : settings.getInterfaceOpacity());
+        //view.setInterfaceOpacity(this.isGoogleTV ? 0 : settings.getInterfaceOpacity());
     }
 
     private ApplicationSettings getSettings()
@@ -1061,9 +1061,9 @@ public class ControlDroneActivity
     private void updateBackButtonState()
     {
         if (canGoBack()) {
-            view.setBackButtonVisible(true);
+            //view.setBackButtonVisible(true);
         } else {
-            view.setBackButtonVisible(false);   
+            //view.setBackButtonVisible(false);
         }
     }
     
@@ -1173,7 +1173,7 @@ public class ControlDroneActivity
         case INTERFACE_OPACITY_PROP:
             if (value instanceof Integer) {
                 if (!isGoogleTV) {
-                    view.setInterfaceOpacity(((Integer) value).floatValue());
+                    //view.setInterfaceOpacity(((Integer) value).floatValue());
                 }
             }
             break;
@@ -1211,7 +1211,7 @@ public class ControlDroneActivity
             @Override
             protected void onPostExecute(Boolean result)
             {
-                view.setSettingsButtonEnabled(true);
+                //view.setSettingsButtonEnabled(true);
             }
         };
 
@@ -1255,13 +1255,13 @@ public class ControlDroneActivity
 
             if (recording) {
                 // Allow to stop recording
-                view.setRecordButtonEnabled(false);
+                //view.setRecordButtonEnabled(false);
                 droneControlService.record();
             } else {           
                 // Start recording
                 if (!sdCardMounted) {
                     if (recordingToUsb) {
-                        view.setRecordButtonEnabled(false);
+                        //view.setRecordButtonEnabled(false);
                         droneControlService.record();
                     } else {
                         onNotifyNoMediaStorageAvailable();
@@ -1271,7 +1271,7 @@ public class ControlDroneActivity
                         onNotifyLowDiskSpace();
                     }
                     
-                    view.setRecordButtonEnabled(false);
+                    //view.setRecordButtonEnabled(false);
                     droneControlService.record();
                 }      
             }
@@ -1281,7 +1281,7 @@ public class ControlDroneActivity
     protected void onTakePhoto()
     {
         if (droneControlService.isMediaStorageAvailable()) {
-            view.setCameraButtonEnabled(false);
+            //view.setCameraButtonEnabled(false);
             droneControlService.takePhoto();
         } else {
            onNotifyNoMediaStorageAvailable();

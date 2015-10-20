@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.opengl.GLES20;
+import android.util.Log;
 
 public class GLBGVideoSprite extends GLSprite 
 {
@@ -32,7 +33,9 @@ public class GLBGVideoSprite extends GLSprite
 	
 	public GLBGVideoSprite(Resources resources) 
 	{
+
 		super(resources, null);
+		Log.d("GLBGVideoSprite", "Constructor called!!!");
 		videoFrameLock = new Object();
 		video = Bitmap.createBitmap(512, 512, Bitmap.Config.RGB_565);
 	}
@@ -41,7 +44,9 @@ public class GLBGVideoSprite extends GLSprite
 	@Override
 	protected void onUpdateTexture()
 	{
-		if (onUpdateVideoTextureNative(program, textures[0]) && (prevImgWidth != imageWidth || prevImgHeight != imageHeight)) {
+			Log.d("GLBGSprite", "onUpdateTexture()");
+
+			if (onUpdateVideoTextureNative(program, textures[0]) && (prevImgWidth != imageWidth || prevImgHeight != imageHeight)) {
 		    if (!isVideoReady) {
 		        isVideoReady = true;
 		    }
@@ -61,6 +66,7 @@ public class GLBGVideoSprite extends GLSprite
 	@Override
 	public void onSurfaceChanged(GL10 gl, int width, int height)
 	{
+			Log.d("GLBGSprite", "onSurfaceChanged()");
 		this.screenWidth = width;
 		this.screenHeight = height;
 		
@@ -72,7 +78,9 @@ public class GLBGVideoSprite extends GLSprite
 
 	@Override
 	public void onDraw(GL10 gl, float x, float y)
-	{   if (!isVideoReady) {
+	{
+			Log.d("GLBGSprite", "onDraw()");
+		if (!isVideoReady) {
 	        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 	    }
 	    
@@ -82,6 +90,7 @@ public class GLBGVideoSprite extends GLSprite
 
 	@Override
 	public void onDraw(Canvas canvas, float x, float y) {
+		Log.d("GLBGSprite", "onDraw()");
 		if (!isVideoReady) {
 		    GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 			super.onDraw(canvas, x, y);
@@ -92,11 +101,13 @@ public class GLBGVideoSprite extends GLSprite
 
 	public boolean updateVideoFrame() 
 	{
+		Log.d("GLBGSprite", "updateVideoFrame()");
 		boolean success = false;
 		
 		synchronized (videoFrameLock) {
-			
-			if (getVideoFrameNative(video, videoSize)) {
+			boolean didGetVideoFrameNative = getVideoFrameNative(video, videoSize);
+			Log.d("GLBGSprite", "didGetVideoFrameNative = " + didGetVideoFrameNative);
+			if (didGetVideoFrameNative) {
 				
 				if (matrix == null) {
 					matrix = new android.graphics.Matrix();
