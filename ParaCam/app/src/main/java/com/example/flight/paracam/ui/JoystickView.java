@@ -171,6 +171,7 @@ public class JoystickView extends View implements Runnable {
 			}
 			thread = new Thread(this);
 			thread.start();
+			onJoystickMoveListener.onJoystickPressed(v);
 			//if (onJoystickMoveListener != null)
 				//onJoystickMoveListener.onJoystickValueChanged(v, getAngle(), getPower(), getDirection());
 		}
@@ -252,6 +253,8 @@ public class JoystickView extends View implements Runnable {
 		public void onJoystickValueChanged(View v, int angle, int power, int direction);
 
 		public void onJoystickReleased(View v);
+
+		public void onJoystickPressed(View v);
 	}
 
 	@Override
@@ -259,7 +262,6 @@ public class JoystickView extends View implements Runnable {
 		while (!Thread.interrupted()) {
 			post(new Runnable() {
 				public void run() {
-					Log.d("joystickview", "thread call");
 					if (onJoystickMoveListener != null)
 						onJoystickMoveListener.onJoystickValueChanged(v, getAngle(),
 								getPower(), getDirection());

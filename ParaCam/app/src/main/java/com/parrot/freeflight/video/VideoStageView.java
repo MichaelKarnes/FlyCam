@@ -5,11 +5,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class VideoStageView extends SurfaceView 
-implements 
+public class VideoStageView extends SurfaceView
+implements
 	SurfaceHolder.Callback
 {
 	public static boolean SHOW_FPS = false;
@@ -18,26 +19,21 @@ implements
     int framesCount=0;
     int framesCountAvg=0;
     long framesTimer=0;
-	
+
     long timeNow;
     long timePrev = 0;
     long timePrevFrame = 0;
     long timeDelta;
-	
+
 	private VideoStageRenderer renderer;
 	private int width = 0;
 	private int height = 0;
 	private DrawThread invalidateThread;
-	
-	Paint fpsPaint = new Paint();
-	
-	public VideoStageView(Context context) {
-		super(context);	
-	
-		init(context);
-	}
 
-	private void init(Context context){
+	Paint fpsPaint = new Paint();
+
+	public VideoStageView(Context context) {
+		super(context);
 		getHolder().addCallback(this);
 
 		fpsPaint.setTextSize(30);
@@ -45,14 +41,14 @@ implements
 	}
 
 	@Override
-	protected void onDraw(Canvas canvas) 
+	protected void onDraw(Canvas canvas)
 	{
 		if (renderer != null) {
 			renderer.onDrawFrame(canvas);
 		}
-		else 
+		else
 			super.onDraw(canvas);
-		
+
 		if (SHOW_FPS) {
 	        now=System.currentTimeMillis();
 	        canvas.drawText(framesCountAvg + " fps", 80, 70, fpsPaint);
@@ -64,38 +60,38 @@ implements
 	        }
 		}
 	}
-	
-	
+
+
 	@Override
-	protected void onSizeChanged(int w, int h, int oldw, int oldh) 
+	protected void onSizeChanged(int w, int h, int oldw, int oldh)
 	{
 		super.onSizeChanged(w, h, oldw, oldh);
-		
+
 		width = w;
 		height = h;
-		
+
 		if (renderer != null) {
 			renderer.onSurfaceChanged((Canvas)null, w, h);
 		}
 	}
-	
 
-	public void setRenderer(VideoStageRenderer renderer)
+
+	public void setRenderer(VideoStageRenderer rend)
 	{
-		this.renderer = renderer;
-		
+		renderer = rend;
+
 		if (width != 0 && height != 0) {
 			renderer.onSurfaceChanged((Canvas)null, width, height);
 		}
 	}
 
-	
+
 	public void onStart()
 	{
 		onStop();
 	}
-	
-	
+
+
 	public void onStop()
 	{
 		if (invalidateThread != null) {
@@ -103,19 +99,19 @@ implements
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
-			int height) 
+			int height)
 	{
-		renderer.onSurfaceChanged((Canvas)null, getWidth(), getHeight());		
+		renderer.onSurfaceChanged((Canvas)null, getWidth(), getHeight());
 	}
 
-	public void surfaceCreated(SurfaceHolder holder) 
+	public void surfaceCreated(SurfaceHolder holder)
 	{
        invalidateThread = new DrawThread(getHolder(), this);
        invalidateThread.setRunning(true);
        invalidateThread.start();
 	}
 
-	public void surfaceDestroyed(SurfaceHolder holder) 
+	public void surfaceDestroyed(SurfaceHolder holder)
 	{
 	       boolean retry = true;
 	       invalidateThread.setRunning(false);
@@ -128,7 +124,7 @@ implements
 	            }
 	        }
 	}
-	
+
     class DrawThread extends Thread {
         private SurfaceHolder surfaceHolder;
         private VideoStageView view;
@@ -164,16 +160,17 @@ implements
 
                     }
                 }
-                
+
                 timePrevFrame = System.currentTimeMillis();
 
                 try {
-            	  	renderer.updateVideoFrame();  
+
+            	  	renderer.updateVideoFrame();
                 	c = surfaceHolder.lockCanvas(null);
 
-                	synchronized (surfaceHolder) {	
+                	synchronized (surfaceHolder) {
                 		view.onDraw(c);
-                	}                 
+                	}
             	} finally {
                     if (c != null) {
                         surfaceHolder.unlockCanvasAndPost(c);

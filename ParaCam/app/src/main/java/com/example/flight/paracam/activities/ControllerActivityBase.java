@@ -2,29 +2,34 @@ package com.example.flight.paracam.activities;
 
 import android.app.Activity;
 import android.graphics.Canvas;
+import android.content.res.Resources;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.VideoView;
+import android.view.ViewGroup.LayoutParams;
 
 import com.example.flight.paracam.HudViewController;
 import com.example.flight.paracam.R;
+import com.example.flight.paracam.ui.DroneVideoView;
 import com.example.flight.paracam.ui.JoystickView;
 import com.parrot.freeflight.video.VideoStageRenderer;
 import com.parrot.freeflight.video.VideoStageView;
 
 public class ControllerActivityBase extends AppCompatActivity
-implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
+implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTouchListener {
 
     private Button takeoff_btn;
     private JoystickView left_stick;
@@ -93,7 +98,6 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
 
         initUI();
         initListeners();
-
 
     }
 
@@ -210,9 +214,6 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
         emergency_btn = (Button) findViewById(R.id.emergency_btn);
         land_btn = (Button) findViewById(R.id.land_button);
         capture_photo = (Button) findViewById(R.id.capture_photo);
-        //vid_view = (GLSurfaceView) findViewById(R.id.videoView);
-        //vid_view.setEGLContextClientVersion(2);
-
     }
 
     private void initListeners() {
@@ -221,8 +222,8 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
             emergency_btn.setOnClickListener(this);
             land_btn.setOnClickListener(this);
             capture_photo.setOnClickListener(this);
-            left_stick.setOnJoystickMoveListener(this, (long) 250);
-            right_stick.setOnJoystickMoveListener(this, (long) 250);
+            left_stick.setOnJoystickMoveListener(this, (long) 100);
+            right_stick.setOnJoystickMoveListener(this, (long) 100);
     }
 
     public void onClick(View v){
@@ -240,6 +241,10 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
         }
     }
 
+//    public void initVideoView() {
+//        view = new DroneVideoView(this, false);
+//    }
+
     public void onJoystickValueChanged(View v,int angle, int power, int direction){
         if (v.getId()==R.id.leftstick)
             onLeftJoystickMove(angle, power, direction);
@@ -249,7 +254,10 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
 
     public void onJoystickReleased(View v){
         // left unimplemented
-        return;
+    }
+
+    public void onJoystickPressed(View v) {
+        // left unimplemented
     }
 
     public void setUIEnabled(Boolean b){
@@ -293,5 +301,10 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener {
     public void setBatteryValue(int value){
         battery_status.setProgress(value);
         batteryPer.setText(value + " %");
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        return false;
     }
 }

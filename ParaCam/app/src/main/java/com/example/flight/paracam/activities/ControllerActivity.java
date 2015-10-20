@@ -34,10 +34,17 @@ import com.parrot.freeflight.drone.DroneProxy;
 import com.parrot.freeflight.drone.NavData;
 import com.parrot.freeflight.receivers.DroneAvailabilityDelegate;
 import com.parrot.freeflight.receivers.DroneAvailabilityReceiver;
+import com.parrot.freeflight.receivers.DroneCameraReadyActionReceiverDelegate;
+import com.parrot.freeflight.receivers.DroneCameraReadyChangeReceiver;
 import com.parrot.freeflight.receivers.DroneConnectionChangeReceiverDelegate;
 import com.parrot.freeflight.receivers.DroneConnectionChangedReceiver;
+import com.parrot.freeflight.receivers.DroneFlyingStateReceiver;
 import com.parrot.freeflight.receivers.DroneReadyReceiver;
 import com.parrot.freeflight.receivers.DroneReadyReceiverDelegate;
+import com.parrot.freeflight.receivers.DroneRecordReadyActionReceiverDelegate;
+import com.parrot.freeflight.receivers.DroneRecordReadyChangeReceiver;
+import com.parrot.freeflight.receivers.DroneVideoRecordStateReceiverDelegate;
+import com.parrot.freeflight.receivers.DroneVideoRecordingStateReceiver;
 import com.parrot.freeflight.receivers.NetworkChangeReceiver;
 import com.parrot.freeflight.receivers.NetworkChangeReceiverDelegate;
 import com.parrot.freeflight.service.DroneControlService;
@@ -46,13 +53,14 @@ import com.parrot.freeflight.tasks.CheckDroneNetworkAvailabilityTask;
 import com.parrot.freeflight.receivers.DroneBatteryChangedReceiver;
 import com.parrot.freeflight.receivers.DroneBatteryChangedReceiverDelegate;
 
+
 import android.support.v4.content.LocalBroadcastManager;
 
 public class ControllerActivity extends ControllerActivityBase implements ServiceConnection,
         DroneAvailabilityDelegate,
         NetworkChangeReceiverDelegate,
         DroneConnectionChangeReceiverDelegate,
-        DroneReadyReceiverDelegate, DroneBatteryChangedReceiverDelegate {
+        DroneReadyReceiverDelegate, DroneBatteryChangedReceiverDelegate, DroneVideoRecordStateReceiverDelegate, DroneCameraReadyActionReceiverDelegate, DroneRecordReadyActionReceiverDelegate {
 
     public static final String TAG = ControllerActivity.class.getSimpleName();
 
@@ -62,6 +70,9 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     private BroadcastReceiver networkChangeReceiver;
     private BroadcastReceiver droneConnectionChangeReceiver;
     private BroadcastReceiver droneReadyReceiver;
+    private DroneVideoRecordingStateReceiver videoRecordingStateReceiver;
+    private DroneCameraReadyChangeReceiver droneCameraReadyChangedReceiver;
+    private DroneRecordReadyChangeReceiver droneRecordReadyChangeReceiver;
 
     private CheckDroneNetworkAvailabilityTask checkDroneConnectionTask;
 
@@ -91,7 +102,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
             return;
         }
 
-        droneBatteryReceiver = new DroneBatteryChangedReceiver(this);
         ui = new ControllerActivityBase();
         Context con = getApplicationContext();
 
@@ -145,8 +155,15 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         networkChangeReceiver = new NetworkChangeReceiver(this);
         droneConnectionChangeReceiver = new DroneConnectionChangedReceiver(this);
         droneReadyReceiver = new DroneReadyReceiver(this);
+        droneBatteryReceiver = new DroneBatteryChangedReceiver(this);
+        videoRecordingStateReceiver = new DroneVideoRecordingStateReceiver(this);
+        droneCameraReadyChangedReceiver = new DroneCameraReadyChangeReceiver(this);
+        droneRecordReadyChangeReceiver = new DroneRecordReadyChangeReceiver(this);
         LocalBroadcastManager localBroadcastMgr = LocalBroadcastManager.getInstance(getApplicationContext());
         localBroadcastMgr.registerReceiver(droneBatteryReceiver, new IntentFilter(DroneControlService.DRONE_BATTERY_CHANGED_ACTION));
+        localBroadcastMgr.registerReceiver(videoRecordingStateReceiver, new IntentFilter(DroneControlService.VIDEO_RECORDING_STATE_CHANGED_ACTION));
+        localBroadcastMgr.registerReceiver(droneCameraReadyChangedReceiver, new IntentFilter(DroneControlService.CAMERA_READY_CHANGED_ACTION));
+        localBroadcastMgr.registerReceiver(droneRecordReadyChangeReceiver, new IntentFilter(DroneControlService.RECORD_READY_CHANGED_ACTION));
     }
 
     private void registerBroadcastReceivers()
@@ -409,11 +426,9 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         double vertical = (Math.cos(radian_angle)*power)/100;
         double horizontal = (Math.sin(radian_angle) * power)/ 100;
 
-        mService.setProgressiveCommandEnabled(true);
-
         if (mService != null) {
             mService.setRoll((float) horizontal);
-            mService.setPitch((float) vertical);
+            mService.setPitch((float) -vertical);
         }
 
     }
@@ -422,6 +437,28 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     public void onJoystickReleased(View v) {
         if(v.getId() == R.id.rightstick) {
             mService.setProgressiveCommandEnabled(false);
+            mService.setPitch(0);
+            mService.setRoll(0);
+            Log.d(TAG, "Right stick Released!!!!!!");
+        }
+        else if(v.getId() == R.id.leftstick) {
+            Log.d(TAG, "Left stick released!!!");
+            mService.setGaz(0);
+        }
+    }
+
+    @Override
+    public void onJoystickPressed(View v) {
+        switch(v.getId()) {
+            case R.id.rightstick:
+                Log.d(TAG, "right stick pressed!!!");
+                mService.setProgressiveCommandEnabled(true);
+                mService.setProgressiveCommandCombinedYawEnabled(true);
+                break;
+            case R.id.leftstick:
+                Log.d(TAG, "left stick pressed!!!");
+                mService.setProgressiveCommandCombinedYawEnabled(false);
+                break;
         }
     }
 
@@ -430,4 +467,20 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         mService.takePhoto();
     }
 
+    @Override
+    public void onDroneRecordVideoStateChanged(boolean recording, boolean usbActive, int remainingTime) {
+
+    }
+
+    @Override
+    public void onCameraReadyChanged(boolean ready) {
+        if (ready=true){
+            //initVideoView();
+        }
+    }
+
+    @Override
+    public void onDroneRecordReadyChanged(boolean ready) {
+
+    }
 }
