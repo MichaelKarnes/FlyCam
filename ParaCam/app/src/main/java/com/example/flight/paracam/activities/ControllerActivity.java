@@ -24,12 +24,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.io.File;
 import java.lang.Math;
 
 import com.example.flight.paracam.DroneService;
+import com.example.flight.paracam.HudViewController;
 import com.example.flight.paracam.MainUI;
 import com.example.flight.paracam.R;
 import com.parrot.freeflight.drone.DroneAcademyMediaListener;
+import com.parrot.freeflight.drone.DroneConfig;
 import com.parrot.freeflight.drone.DroneProxy;
 import com.parrot.freeflight.drone.NavData;
 import com.parrot.freeflight.receivers.DroneAvailabilityDelegate;
@@ -52,6 +56,7 @@ import com.parrot.freeflight.service.intents.DroneStateManager;
 import com.parrot.freeflight.tasks.CheckDroneNetworkAvailabilityTask;
 import com.parrot.freeflight.receivers.DroneBatteryChangedReceiver;
 import com.parrot.freeflight.receivers.DroneBatteryChangedReceiverDelegate;
+import com.parrot.freeflight.transcodeservice.TranscodingService;
 
 
 import android.support.v4.content.LocalBroadcastManager;
@@ -79,6 +84,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     private boolean droneOnNetwork;
     private DroneBatteryChangedReceiver droneBatteryReceiver;
     private ControllerActivityBase ui;
+    private HudViewController view;
 
 
     static {
@@ -200,10 +206,20 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     @Override
     protected void onPause()
     {
-        super.onPause();
+
+        if (view != null) {
+            view.onResume();
+        }
+
+        if (mService != null) {
+            mService.pause();
+        }
 
         unregisterReceivers();
         stopTasks();
+
+        super.onPause();
+
     }
 
     public void onDroneBatteryChanged(int value) {
@@ -213,13 +229,23 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     @Override
     protected void onResume()
     {
-        super.onResume();
+
+        if (view != null) {
+            view.onResume();
+        }
+
+        if (mService != null) {
+            mService.resume();
+        }
 
         registerBroadcastReceivers();
 
         disableAllButtons();
 
         checkDroneConnectivity();
+
+        super.onResume();
+
     }
 
 
@@ -256,10 +282,11 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     public void onDroneConnected()
     {
         if (mService != null) {
-//            mService.pause();
-
-            mService.requestConfigUpdate();
+            mService.resume();
+            mService.requestDroneStatus();
         }
+
+        runTranscoding();
     }
 
 
@@ -288,8 +315,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         Log.d(TAG, "Drone is READYYYYYYYYYYYYYYYYYYYYY");
         setUIEnabled(true);
 
-        mService.record();
-
         //initCanvasView();
         //initGLView();
         initHudController();
@@ -300,6 +325,10 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 //            e.printStackTrace();
 //        }
         //startDrawThread();
+    }
+
+    protected void initHudController() {
+        view = new HudViewController(this, false);
     }
 
     @SuppressLint("NewApi")
@@ -327,7 +356,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
     public void onServiceConnected(ComponentName name, IBinder service)
     {
-        Log.d(TAG, "DroneService CONNECTED");
+        Log.d(TAG, "DroneService CONNECTED via CONTROLLER ACTIVITY!!!!!!!!");
         mService = (DroneService)((DroneControlService.LocalBinder) service).getService();
         mService.setMagnetoEnabled(true);
 
@@ -482,5 +511,21 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     @Override
     public void onDroneRecordReadyChanged(boolean ready) {
 
+    }
+
+    private void runTranscoding()
+    {
+        if (mService.getDroneVersion() == DroneConfig.EDroneVersion.DRONE_1) {
+            File mediaDir = mService.getMediaDir();
+
+            if (mediaDir != null) {
+                Log.d("Controller Activity: ", "Transcoding 2 started!!!!!!!!!!");
+                Intent transcodeIntent = new Intent(this, TranscodingService.class);
+                transcodeIntent.putExtra(TranscodingService.EXTRA_MEDIA_PATH, mediaDir.toString());
+                startService(transcodeIntent);
+            } else {
+                Log.d(TAG, "Transcoding skipped SD card is missing.");
+            }
+        }
     }
 }

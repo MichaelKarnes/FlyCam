@@ -92,17 +92,13 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ui_controller);
+        //setContentView(R.layout.activity_ui_controller);
 
         context = this;
 
-        initUI();
-        initListeners();
+        //initUI();
+        //initListeners();
 
-    }
-
-    protected void initHudController() {
-        view = new HudViewController(this, false);
     }
 
 //    class DrawThread extends Thread {
@@ -261,13 +257,13 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     }
 
     public void setUIEnabled(Boolean b){
-        takeoff_btn.setEnabled(b);
-        left_stick.setEnabled(b);
-        right_stick.setEnabled(b);
-        follow_btn.setEnabled(b);
-        emergency_btn.setEnabled(b);
-        land_btn.setEnabled(b);
-        capture_photo.setEnabled(b);
+        //takeoff_btn.setEnabled(b);
+       // left_stick.setEnabled(b);
+        //right_stick.setEnabled(b);
+        //follow_btn.setEnabled(b);
+      //  emergency_btn.setEnabled(b);
+       // land_btn.setEnabled(b);
+       // capture_photo.setEnabled(b);
     }
 
     protected void onTakeOff(){
@@ -299,8 +295,8 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     }
 
     public void setBatteryValue(int value){
-        battery_status.setProgress(value);
-        batteryPer.setText(value + " %");
+      //  battery_status.setProgress(value);
+       // batteryPer.setText(value + " %");
     }
 
     @Override
