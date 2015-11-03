@@ -86,8 +86,6 @@ public class HudViewController
         glView = new GLSurfaceView(context);
         glView.setEGLContextClientVersion(2);
 
-        context.setContentView(glView);
-
         renderer = new VideoStageRenderer(context, null);
 
         if (useSoftwareRendering){

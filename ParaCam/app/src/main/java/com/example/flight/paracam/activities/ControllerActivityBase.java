@@ -36,148 +36,27 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     private JoystickView right_stick;
     private ProgressBar battery_status;
     private TextView batteryPer;
-    private Button land_btn;
+    private Button record_button;
     private Button follow_btn;
     private Button emergency_btn;
     private Button capture_photo;
+    private Button switch_cam_btn;
 //    private DrawThread drawThread;
 
-    //    private GLSurfaceView glView;
-//    private VideoStageView canvasView;
-//    private VideoStageRenderer renderer;
+    private GLSurfaceView glView;
+    private VideoStageRenderer renderer;
     private Activity context;
-
-    private HudViewController view;
-
-    private int mProgressStatus = 0;
-    private Handler mHandler = new Handler();
-
-    long timeNow;
-    long timePrev = 0;
-    long timePrevFrame = 0;
-    long timeDelta;
-
-//    private Runnable drawRoutine = new Runnable() {
-//        @Override
-//        public void run() {
-//            //limit frame rate to max 60fps
-//            timeNow = System.currentTimeMillis();
-//            timeDelta = timeNow - timePrevFrame;
-//            if ( timeDelta < 33) {
-//                try {
-//                    Thread.sleep(16 - timeDelta);
-//                }
-//                catch(InterruptedException e) {
-//
-//                }
-//            }
-//
-//            timePrevFrame = System.currentTimeMillis();
-//
-//            try {
-//                renderer.updateVideoFrame();
-//                //c = surfaceHolder.lockCanvas(null);
-//
-////                synchronized (surfaceHolder) {
-////                    view.onDraw(c);
-////                }
-//            } finally {
-////                if (c != null) {
-////                    surfaceHolder.unlockCanvasAndPost(c);
-////                }
-//            }
-//        }
-//    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_ui_controller);
+        setContentView(R.layout.activity_ui_controller);
 
         context = this;
-
-        //initUI();
-        //initListeners();
-
+        renderer = new VideoStageRenderer(context, null);
+        initUI();
+        initListeners();
     }
-
-//    class DrawThread extends Thread {
-//        private SurfaceHolder surfaceHolder;
-//        private GLSurfaceView view;
-//        private boolean run = false;
-//
-//        public DrawThread(SurfaceHolder surfaceHolder, GLSurfaceView gameView) {
-//            this.surfaceHolder = surfaceHolder;
-//            this.view = gameView;
-//    }
-//
-//        public void setRunning(boolean run) {
-//            this.run = run;
-//        }
-//
-//        public SurfaceHolder getSurfaceHolder() {
-//            return surfaceHolder;
-//        }
-//
-//        @Override
-//        public void run() {
-//            Canvas c;
-//            while (run) {
-//                c = null;
-//
-//                //limit frame rate to max 60fps
-//                timeNow = System.currentTimeMillis();
-//                timeDelta = timeNow - timePrevFrame;
-//                if ( timeDelta < 16) {
-//                    try {
-//                        Thread.sleep(16 - timeDelta);
-//                    }
-//                    catch(InterruptedException e) {
-//
-//                    }
-//                }
-//
-//                timePrevFrame = System.currentTimeMillis();
-//
-//                try {
-//                    renderer.updateVideoFrame();
-//                    c = surfaceHolder.lockCanvas(null);
-//
-//                    synchronized (surfaceHolder) {
-//                        if (renderer != null) {
-//                            renderer.onDrawFrame(c);
-//                        }
-//                    }
-//                } finally {
-//                    if (c != null) {
-//                        surfaceHolder.unlockCanvasAndPost(c);
-//                    }
-//                }
-//            }
-//        }
-//    }
-
-//    protected void startDrawThread() {
-//        drawThread = new DrawThread(glView.getHolder(), glView );
-//        drawThread.start();
-//    }
-//
-//    protected void initCanvasView() {
-//        canvasView = new VideoStageView(context);
-//        canvasView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-//        canvasView.setRenderer(renderer);
-//        setContentView(canvasView);
-//    }
-//
-//    protected void initGLView() {
-//        renderer = new VideoStageRenderer(context, null);
-//        glView = new GLSurfaceView(context);
-//        glView.setEGLContextClientVersion(2);
-//        glView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-//        glView.setRenderer(renderer);
-//        glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-//        setContentView(glView);
-//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -208,16 +87,21 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
         batteryPer = (TextView) findViewById(R.id.batteryPercent);
         follow_btn = (Button) findViewById(R.id.follow_button);
         emergency_btn = (Button) findViewById(R.id.emergency_btn);
-        land_btn = (Button) findViewById(R.id.land_button);
+        record_button = (Button) findViewById(R.id.record_button);
         capture_photo = (Button) findViewById(R.id.capture_photo);
+        switch_cam_btn = (Button) findViewById(R.id.switch_button);
+        glView = (GLSurfaceView) findViewById(R.id.video_feed);
+        glView.setEGLContextClientVersion(2);
+        glView.setRenderer(renderer);
     }
 
     private void initListeners() {
             takeoff_btn.setOnClickListener(this);
             follow_btn.setOnClickListener(this);
             emergency_btn.setOnClickListener(this);
-            land_btn.setOnClickListener(this);
+            record_button.setOnClickListener(this);
             capture_photo.setOnClickListener(this);
+            switch_cam_btn.setOnClickListener(this);
             left_stick.setOnJoystickMoveListener(this, (long) 100);
             right_stick.setOnJoystickMoveListener(this, (long) 100);
     }
@@ -225,21 +109,19 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     public void onClick(View v){
         switch (v.getId()){
             case R.id.takeoffbutton:
-                onTakeOff();
+                onTakeOff_or_Land();
             case R.id.emergency_btn:
                 onEmergency();
-            case R.id.land_button:
-                onLand();
+            case R.id.record_button:
+                onRecord();
             case R.id.follow_button:
                 onFollow();
             case R.id.capture_photo:
                 onCapturePhoto();
+            case R.id.switch_button:
+                onCameraSwitch();
         }
     }
-
-//    public void initVideoView() {
-//        view = new DroneVideoView(this, false);
-//    }
 
     public void onJoystickValueChanged(View v,int angle, int power, int direction){
         if (v.getId()==R.id.leftstick)
@@ -257,50 +139,82 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     }
 
     public void setUIEnabled(Boolean b){
-        //takeoff_btn.setEnabled(b);
-       // left_stick.setEnabled(b);
-        //right_stick.setEnabled(b);
-        //follow_btn.setEnabled(b);
-      //  emergency_btn.setEnabled(b);
-       // land_btn.setEnabled(b);
-       // capture_photo.setEnabled(b);
+        takeoff_btn.setEnabled(b);
+        left_stick.setEnabled(b);
+        right_stick.setEnabled(b);
+        follow_btn.setEnabled(b);
+        emergency_btn.setEnabled(b);
+        record_button.setEnabled(b);
+        capture_photo.setEnabled(b);
+        switch_cam_btn.setEnabled(b);
     }
 
-    protected void onTakeOff(){
+    protected void onTakeOff_or_Land(){
+        if(takeoff_btn.getText().equals("Take Off")){
+            takeoff_btn.setText("Land");
+        }
 
+        else if(takeoff_btn.getText().equals("Land")){
+            takeoff_btn.setText("Take Off");
+        }
     }
 
     protected void onLeftJoystickMove(int angle, int power, int direction){
-
+        //left unimplemented
     }
 
     protected void onRightJoystickMove(int angle, int power, int direction){
-
+        //left unimplemented
     }
 
     protected void onEmergency(){
-
+        //left unimplemented
     }
 
-    protected void onLand(){
-
+    protected void onRecord(){
+        if(record_button.getText().equals("Record Video")){
+            record_button.setText("Stop Recording");
+        }
+        else if(record_button.getText().equals("Stop Recording")){
+            record_button.setText("Record Video");
+        }
     }
 
     protected void onFollow(){
-
+        //left unimplemented
     }
 
     protected void onCapturePhoto(){
+        //left unimplemented
+    }
 
+    protected void onCameraSwitch(){
+        //left unimplemented
     }
 
     public void setBatteryValue(int value){
-      //  battery_status.setProgress(value);
-       // batteryPer.setText(value + " %");
+        battery_status.setProgress(value);
+        batteryPer.setText(value + " %");
     }
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         return false;
+    }
+
+    @Override
+    protected void onResume(){
+        if (glView != null) {
+            glView.onResume();
+        }
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause(){
+        if (glView != null) {
+            glView.onPause();
+        }
+        super.onPause();
     }
 }

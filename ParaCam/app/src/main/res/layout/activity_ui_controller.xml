@@ -7,6 +7,14 @@
     tools:context="com.example.flight.paracam.ui.ui_controller"
     android:id="@+id/ui_controller">
 
+    <android.opengl.GLSurfaceView
+        android:layout_width="320dp"
+        android:layout_height="240dp"
+        android:id="@+id/video_feed"
+        android:layout_gravity="bottom"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -14,7 +22,11 @@
         android:id="@+id/takeoffbutton"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:background="@drawable/button_border"
+        android:textColor="#FFFFFF"
+        android:layout_alignRight="@+id/record_button"
+        android:layout_alignEnd="@+id/record_button" />
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
@@ -38,11 +50,15 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Land"
-        android:id="@+id/land_button"
-        android:layout_alignTop="@+id/emergency_btn"
+        android:text="Record Video"
+        android:id="@+id/record_button"
+        android:background="@drawable/button_border"
+        android:textColor="#FFFFFF"
+        android:layout_below="@+id/capture_photo"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_toLeftOf="@+id/video_feed"
+        android:layout_toStartOf="@+id/video_feed" />
 
     <Button
         android:layout_width="wrap_content"
@@ -51,17 +67,25 @@
         android:id="@+id/follow_button"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:layout_alignLeft="@+id/capture_photo"
+        android:layout_alignStart="@+id/capture_photo"
+        android:background="@drawable/button_border"
+        android:textColor="#FFFFFF" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Emergency"
         android:id="@+id/emergency_btn"
-        android:layout_centerVertical="true"
+        android:textSize="14dp"
+        android:textColor="#FF0000"
+        android:background="@drawable/button_border"
+        android:layout_below="@+id/capture_photo"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:textSize="10dp" />
+        android:layout_alignLeft="@+id/capture_photo"
+        android:layout_alignStart="@+id/capture_photo" />
 
     <com.example.flight.paracam.ui.JoystickView
         android:layout_width="wrap_content"
@@ -70,9 +94,8 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/land_button"
-        android:layout_toStartOf="@+id/batteryStat"
-        android:layout_toLeftOf="@+id/batteryStat" />
+        android:layout_toStartOf="@+id/logo"
+        android:layout_toLeftOf="@+id/logo" />
 
     <com.example.flight.paracam.ui.JoystickView
         android:layout_width="wrap_content"
@@ -82,50 +105,42 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_toEndOf="@+id/batteryPercent"
-        android:layout_alignTop="@+id/leftstick"
-        android:layout_toRightOf="@+id/batteryPercent" />
+        android:layout_toRightOf="@+id/batteryPercent"
+        android:layout_alignTop="@+id/leftstick" />
 
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/logo"
-        android:layout_alignTop="@+id/leftstick"
-        android:layout_toLeftOf="@+id/rightstick"
-        android:layout_marginTop="33dp"
-        android:layout_toRightOf="@+id/leftstick"
-        android:layout_toEndOf="@+id/leftstick"
+        android:src="@drawable/launcher_logo"
         android:layout_above="@+id/batteryPercent"
-        android:src="@drawable/launcher_logo" />
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/video_feed" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Take Picture"
         android:id="@+id/capture_photo"
+        android:background="@drawable/button_border"
         android:layout_below="@+id/follow_button"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignLeft="@+id/follow_button"
-        android:layout_alignStart="@+id/follow_button" />
+        android:layout_toRightOf="@+id/video_feed"
+        android:layout_alignRight="@+id/rightstick"
+        android:layout_alignEnd="@+id/rightstick"
+        android:textColor="#FFFFFF" />
 
-    <!--<android.opengl.GLSurfaceView-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/videoView"-->
-        <!--android:layout_alignParentTop="true"-->
-        <!--android:layout_toRightOf="@+id/takeoffbutton"-->
-        <!--android:layout_above="@+id/leftstick"-->
-        <!--android:layout_toLeftOf="@+id/follow_button"-->
-        <!--android:layout_toStartOf="@+id/follow_button" />-->
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Switch Camera"
+        android:id="@+id/switch_button"
+        android:background="@drawable/button_border"
+        android:textColor="#FFFFFF"
+        android:layout_above="@+id/record_button"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_toLeftOf="@+id/video_feed"
+        android:layout_toStartOf="@+id/video_feed" />
 
-    <!--<com.parrot.freeflight.video.VideoStageView-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/canvasView"-->
-        <!--android:layout_alignParentTop="true"-->
-        <!--android:layout_toRightOf="@+id/takeoffbutton"-->
-        <!--android:layout_above="@+id/leftstick"-->
-        <!--android:layout_toLeftOf="@+id/follow_button"-->
-        <!--android:layout_toStartOf="@+id/follow_button" />-->
 
 </RelativeLayout>

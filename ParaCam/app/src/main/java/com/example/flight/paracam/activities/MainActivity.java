@@ -1,4 +1,4 @@
-package com.example.flight.paracam;
+package com.example.flight.paracam.activities;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
@@ -11,10 +11,8 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,8 +20,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
+import com.example.flight.paracam.DroneService;
+import com.example.flight.paracam.R;
 import com.parrot.freeflight.receivers.DroneAvailabilityDelegate;
 import com.parrot.freeflight.receivers.DroneAvailabilityReceiver;
 import com.parrot.freeflight.receivers.DroneConnectionChangeReceiverDelegate;
@@ -35,15 +34,14 @@ import com.parrot.freeflight.receivers.NetworkChangeReceiverDelegate;
 import com.parrot.freeflight.service.DroneControlService;
 import com.parrot.freeflight.service.intents.DroneStateManager;
 import com.parrot.freeflight.tasks.CheckDroneNetworkAvailabilityTask;
-//import com.parrot.freeflight.utils.GPSHelper;
+
 
 public class MainActivity extends AppCompatActivity
 implements ServiceConnection,
         DroneAvailabilityDelegate,
         NetworkChangeReceiverDelegate,
         DroneConnectionChangeReceiverDelegate,
-        DroneReadyReceiverDelegate
-{
+        DroneReadyReceiverDelegate, View.OnClickListener {
     public static final String TAG = MainActivity.class.getSimpleName();
 
     private DroneService mService;
@@ -55,7 +53,11 @@ implements ServiceConnection,
 
     private CheckDroneNetworkAvailabilityTask checkDroneConnectionTask;
 
-    private Button btn_fly;
+    private Button start_btn;
+    private Button help_btn;
+    private Button check_connection_btn;
+
+    Boolean droneConnected = false;
 
     private boolean droneOnNetwork;
 
@@ -75,89 +77,39 @@ implements ServiceConnection,
         Log.d(TAG, "onCreate()");
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
         if (isFinishing()) {
             return;
         }
 
-        Context con = getApplicationContext();
+        setContentView(R.layout.activity_main_ui);
 
         initUI();
         initBroadcastReceivers();
+        initListeners();
 
-        Context freeflightContext;
         try {
-            //freeflightContext = getApplicationContext().createPackageContext("com.parrot.freeflight", Context.CONTEXT_IGNORE_SECURITY);
             bindService(new Intent(this, DroneService.class), this, Context.BIND_AUTO_CREATE);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-//        if (GPSHelper.deviceSupportGPS(this) && !GPSHelper.isGpsOn(this)) {
-//            onNotifyAboutGPSDisabled();
-//        }
     }
 
     private void initUI() {
-        btn_fly = (Button) findViewById(R.id.btn_fly);
+        start_btn = (Button) findViewById(R.id.start_button);
+        help_btn = (Button) findViewById(R.id.help_button);
+        check_connection_btn = (Button) findViewById(R.id.connection_button);
     }
 
     private void initListeners() {
-        btn_fly.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.e(TAG, "btn_fly clicked");
-                Toast.makeText(MainActivity.this, "Button Clicked", Toast.LENGTH_SHORT).show();
-//                Handler handler = new Handler();
-//                handler.postDelayed(new Runnable() {
-//                    public void run() {
-//                        if (mService != null) {
-//                            mService.triggerTakeOff();
-//                        }
-//                    }
-//                }, 1000);
-//
-//                Handler handler2 = new Handler();
-//                handler2.postDelayed(new Runnable() {
-//                    public void run() {
-//                        if (mService != null) {
-//                            mService.triggerEmergency();
-//                        }
-//                    }
-//                }, 4000);
-            }
-        });
-    }
-
-    public void clickFunc(View view) {
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                if (mService != null) {
-                    mService.triggerTakeOff();
-                }
-            }
-        }, 1000);
-
-        Handler handler2 = new Handler();
-        handler2.postDelayed(new Runnable() {
-            public void run() {
-                if (mService != null) {
-                    mService.triggerEmergency();
-                }
-            }
-        }, 4000);
+        start_btn.setOnClickListener(this);
+        help_btn.setOnClickListener(this);
+        check_connection_btn.setOnClickListener(this);
     }
 
     public void updateUI() {
-        // TODO
-        if(droneOnNetwork) {
-            //btn_fly.setEnabled(true);
-        }
-        else {
-            btn_fly.setEnabled(false);
-        }
+
     }
 
     protected void initBroadcastReceivers()
@@ -229,18 +181,6 @@ implements ServiceConnection,
         updateUI();
     }
 
-    protected boolean onStartFreeflight() {
-        if (!droneOnNetwork) {
-            return false;
-        }
-
-//        Intent connectActivity = new Intent(this, ConnectActivity.class);
-//        startActivity(connectActivity);
-        // TODO implement control
-
-        return true;
-    }
-
     public void onNetworkChanged(NetworkInfo info)
     {
         Log.d(TAG, "Network state has changed. State is: " + (info.isConnected()?"CONNECTED":"DISCONNECTED"));
@@ -256,9 +196,8 @@ implements ServiceConnection,
 
     public void onDroneConnected()
     {
+        droneConnected = true;
         if (mService != null) {
-//            mService.pause();
-
             mService.requestConfigUpdate();
         }
     }
@@ -266,7 +205,7 @@ implements ServiceConnection,
 
     public void onDroneDisconnected()
     {
-        // Left unimplemented
+        droneConnected = false;
     }
 
 
@@ -285,9 +224,8 @@ implements ServiceConnection,
     }
 
     public void onDroneReady() {
-        // TODO
+        droneConnected = true;
         Log.d(TAG, "Drone is READYYYYYYYYYYYYYYYYYYYYY");
-        btn_fly.setEnabled(true);
     }
 
     @SuppressLint("NewApi")
@@ -348,17 +286,6 @@ implements ServiceConnection,
 
     }
 
-    protected boolean isFreeFlightEnabled()
-    {
-        return droneOnNetwork;
-    }
-//
-//    private void onNotifyAboutGPSDisabled()
-//    {
-//        showAlertDialog(getString(R.string.Location_services_alert), getString(R.string.If_you_want_to_store_your_location_anc_access_your_media_enable_it),
-//                null);
-//    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -381,8 +308,30 @@ implements ServiceConnection,
         return super.onOptionsItemSelected(item);
     }
 
-    public void beginUI(View view) {
-        Intent intent = new Intent(this, MainUI.class);
-        startActivity(intent);
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.start_button:
+                onStartButton();
+            case R.id.help_button:
+                onHelp();
+            case R.id.connection_button:
+                onCheckConnection();
+        }
+    }
+
+    public void onStartButton(){
+        if(droneConnected){
+            Intent intent = new Intent(this, LoadingScreenActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    public void onHelp(){
+
+    }
+
+    public void onCheckConnection(){
+
     }
 }

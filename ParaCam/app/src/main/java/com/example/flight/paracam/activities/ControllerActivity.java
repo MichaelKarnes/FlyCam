@@ -27,6 +27,8 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.lang.Math;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.example.flight.paracam.DroneService;
 import com.example.flight.paracam.HudViewController;
@@ -56,8 +58,13 @@ import com.parrot.freeflight.service.intents.DroneStateManager;
 import com.parrot.freeflight.tasks.CheckDroneNetworkAvailabilityTask;
 import com.parrot.freeflight.receivers.DroneBatteryChangedReceiver;
 import com.parrot.freeflight.receivers.DroneBatteryChangedReceiverDelegate;
+import com.parrot.freeflight.tasks.GetMediaObjectsListTask;
 import com.parrot.freeflight.transcodeservice.TranscodingService;
-
+import com.parrot.freeflight.receivers.MediaReadyDelegate;
+import com.parrot.freeflight.receivers.MediaReadyReceiver;
+import com.parrot.freeflight.receivers.MediaStorageReceiver;
+import com.parrot.freeflight.receivers.MediaStorageReceiverDelegate;
+import com.parrot.freeflight.vo.MediaVO;
 
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -65,7 +72,9 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         DroneAvailabilityDelegate,
         NetworkChangeReceiverDelegate,
         DroneConnectionChangeReceiverDelegate,
-        DroneReadyReceiverDelegate, DroneBatteryChangedReceiverDelegate, DroneVideoRecordStateReceiverDelegate, DroneCameraReadyActionReceiverDelegate, DroneRecordReadyActionReceiverDelegate {
+        DroneReadyReceiverDelegate, DroneBatteryChangedReceiverDelegate, DroneVideoRecordStateReceiverDelegate, DroneCameraReadyActionReceiverDelegate, DroneRecordReadyActionReceiverDelegate,
+        MediaReadyDelegate,
+        MediaStorageReceiverDelegate {
 
     public static final String TAG = ControllerActivity.class.getSimpleName();
 
@@ -78,13 +87,16 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     private DroneVideoRecordingStateReceiver videoRecordingStateReceiver;
     private DroneCameraReadyChangeReceiver droneCameraReadyChangedReceiver;
     private DroneRecordReadyChangeReceiver droneRecordReadyChangeReceiver;
+    private MediaReadyReceiver mediaReadyReceiver;
 
     private CheckDroneNetworkAvailabilityTask checkDroneConnectionTask;
 
     private boolean droneOnNetwork;
     private DroneBatteryChangedReceiver droneBatteryReceiver;
     private ControllerActivityBase ui;
-    private HudViewController view;
+    private boolean recording;
+    private boolean prevRecording;
+    private boolean running;
 
 
     static {
@@ -109,7 +121,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         }
 
         ui = new ControllerActivityBase();
-        Context con = getApplicationContext();
+        running = false;
 
         initBroadcastReceivers();
 
@@ -118,11 +130,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-//        if (GPSHelper.deviceSupportGPS(this) && !GPSHelper.isGpsOn(this)) {
-//            onNotifyAboutGPSDisabled();
-//        }
-        //droneProxy = DroneProxy.getInstance(getApplicationContext());
     }
 
     public void clickFunc(View view) {
@@ -165,11 +172,17 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         videoRecordingStateReceiver = new DroneVideoRecordingStateReceiver(this);
         droneCameraReadyChangedReceiver = new DroneCameraReadyChangeReceiver(this);
         droneRecordReadyChangeReceiver = new DroneRecordReadyChangeReceiver(this);
+        mediaReadyReceiver = new MediaReadyReceiver(this);
         LocalBroadcastManager localBroadcastMgr = LocalBroadcastManager.getInstance(getApplicationContext());
         localBroadcastMgr.registerReceiver(droneBatteryReceiver, new IntentFilter(DroneControlService.DRONE_BATTERY_CHANGED_ACTION));
         localBroadcastMgr.registerReceiver(videoRecordingStateReceiver, new IntentFilter(DroneControlService.VIDEO_RECORDING_STATE_CHANGED_ACTION));
         localBroadcastMgr.registerReceiver(droneCameraReadyChangedReceiver, new IntentFilter(DroneControlService.CAMERA_READY_CHANGED_ACTION));
         localBroadcastMgr.registerReceiver(droneRecordReadyChangeReceiver, new IntentFilter(DroneControlService.RECORD_READY_CHANGED_ACTION));
+
+        IntentFilter mediaReadyFilter = new IntentFilter();
+        mediaReadyFilter.addAction(DroneControlService.NEW_MEDIA_IS_AVAILABLE_ACTION);
+        mediaReadyFilter.addAction(TranscodingService.NEW_MEDIA_IS_AVAILABLE_ACTION);
+        localBroadcastMgr.registerReceiver(mediaReadyReceiver, mediaReadyFilter);
     }
 
     private void registerBroadcastReceivers()
@@ -206,11 +219,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     @Override
     protected void onPause()
     {
-
-        if (view != null) {
-            view.onResume();
-        }
-
         if (mService != null) {
             mService.pause();
         }
@@ -229,11 +237,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     @Override
     protected void onResume()
     {
-
-        if (view != null) {
-            view.onResume();
-        }
-
         if (mService != null) {
             mService.resume();
         }
@@ -245,7 +248,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         checkDroneConnectivity();
 
         super.onResume();
-
     }
 
 
@@ -253,18 +255,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     {
         droneOnNetwork = false;
         updateUI();
-    }
-
-    protected boolean onStartFreeflight() {
-        if (!droneOnNetwork) {
-            return false;
-        }
-
-//        Intent connectActivity = new Intent(this, ConnectActivity.class);
-//        startActivity(connectActivity);
-        // TODO implement control
-
-        return true;
     }
 
     public void onNetworkChanged(NetworkInfo info)
@@ -312,24 +302,9 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
     public void onDroneReady() {
         // TODO
-        Log.d(TAG, "Drone is READYYYYYYYYYYYYYYYYYYYYY");
         setUIEnabled(true);
-
-        //initCanvasView();
-        //initGLView();
-        initHudController();
-
-//        try {
-//            Thread.sleep(50, 0);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-        //startDrawThread();
     }
 
-    protected void initHudController() {
-        view = new HudViewController(this, false);
-    }
 
     @SuppressLint("NewApi")
     private void checkDroneConnectivity()
@@ -362,6 +337,8 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
         if(mService != null)
             mService.requestDroneStatus();
+
+        runTranscoding();
     }
 
 
@@ -390,17 +367,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
     }
 
-    protected boolean isFreeFlightEnabled()
-    {
-        return droneOnNetwork;
-    }
-//
-//    private void onNotifyAboutGPSDisabled()
-//    {
-//        showAlertDialog(getString(R.string.Location_services_alert), getString(R.string.If_you_want_to_store_your_location_anc_access_your_media_enable_it),
-//                null);
-//    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -423,18 +389,28 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         return super.onOptionsItemSelected(item);
     }
 
-    public void beginUI(View view) {
-        Intent intent = new Intent(this, MainUI.class);
-        startActivity(intent);
+    @Override
+    protected void onEmergency(){
+        mService.triggerEmergency();
     }
 
     @Override
-    protected void onTakeOff() {
+    protected void onRecord(){
+        super.onRecord();
+        if (isFinishing()) {
+            return;
+        }
+        mService.record();
+    }
+
+    @Override
+    protected void onTakeOff_or_Land() {
+        super.onTakeOff_or_Land();
+        if (isFinishing()) {
+            return;
+        }
         mService.triggerTakeOff();
     }
-
-    @Override
-    protected void onLand() { mService.triggerTakeOff(); }
 
     @Override
     protected void onLeftJoystickMove(int angle, int power, int direction){
@@ -442,11 +418,12 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         double vertical = (Math.cos(radian_angle)*power)/100;
         double horizontal = (Math.sin(radian_angle)*power)/100;
 
-        if (mService != null){
-            mService.setGaz((float) vertical);
-            mService.setYaw((float) horizontal);
+        if(running){
+            if (mService != null){
+                mService.setGaz((float) vertical);
+                mService.setYaw((float) horizontal);
+            }
         }
-
     }
 
     @Override
@@ -455,38 +432,36 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         double vertical = (Math.cos(radian_angle)*power)/100;
         double horizontal = (Math.sin(radian_angle) * power)/ 100;
 
-        if (mService != null) {
-            mService.setRoll((float) horizontal);
-            mService.setPitch((float) -vertical);
+        if(running){
+            if (mService != null) {
+                mService.setRoll((float) horizontal);
+                mService.setPitch((float) -vertical);
+            }
         }
-
     }
 
     @Override
     public void onJoystickReleased(View v) {
         if(v.getId() == R.id.rightstick) {
             mService.setProgressiveCommandEnabled(false);
-            mService.setPitch(0);
-            mService.setRoll(0);
-            Log.d(TAG, "Right stick Released!!!!!!");
+            running = false;
+           // mService.setPitch(0);
+           // mService.setRoll(0);
         }
-        else if(v.getId() == R.id.leftstick) {
-            Log.d(TAG, "Left stick released!!!");
-            mService.setGaz(0);
+        else if(v.getId() == R.id.leftstick){
+            running = false;
+            Log.d("Controller Activity:", "Left Joystick RELEASED!!!!");
         }
     }
 
     @Override
     public void onJoystickPressed(View v) {
+        running = true;
         switch(v.getId()) {
             case R.id.rightstick:
-                Log.d(TAG, "right stick pressed!!!");
                 mService.setProgressiveCommandEnabled(true);
-                mService.setProgressiveCommandCombinedYawEnabled(true);
                 break;
             case R.id.leftstick:
-                Log.d(TAG, "left stick pressed!!!");
-                mService.setProgressiveCommandCombinedYawEnabled(false);
                 break;
         }
     }
@@ -498,7 +473,17 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
     @Override
     public void onDroneRecordVideoStateChanged(boolean recording, boolean usbActive, int remainingTime) {
+        if (mService == null)
+             return;
 
+        prevRecording = this.recording;
+        this.recording = recording;
+
+        if (!recording) {
+            if (prevRecording != recording && mService != null) {
+                runTranscoding();
+            }
+        }
     }
 
     @Override
@@ -513,19 +498,56 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
     }
 
-    private void runTranscoding()
-    {
-        if (mService.getDroneVersion() == DroneConfig.EDroneVersion.DRONE_1) {
-            File mediaDir = mService.getMediaDir();
+    private void runTranscoding(){
+        if (mService != null) {
+            DroneConfig droneConfig = mService.getDroneConfig();
 
-            if (mediaDir != null) {
-                Log.d("Controller Activity: ", "Transcoding 2 started!!!!!!!!!!");
-                Intent transcodeIntent = new Intent(this, TranscodingService.class);
-                transcodeIntent.putExtra(TranscodingService.EXTRA_MEDIA_PATH, mediaDir.toString());
-                startService(transcodeIntent);
-            } else {
-                Log.d(TAG, "Transcoding skipped SD card is missing.");
+            boolean sdCardMounted = mService.isMediaStorageAvailable();
+            boolean recordingToUsb = droneConfig.isRecordOnUsb() && mService.isUSBInserted();
+
+            if (recording)
+                mService.record();
+            else{
+                // Start recording
+                if (!sdCardMounted) {
+                    if (recordingToUsb)
+                        mService.record();
+                    } else
+                        mService.record();
+
             }
         }
+    }
+
+
+    @Override
+    public void onMediaReady(File mediaFile) {
+        Log.d(TAG, "New file available " + mediaFile.getAbsolutePath());
+    }
+
+    @Override
+    public void onMediaStorageMounted() {
+
+    }
+
+    @Override
+    public void onMediaStorageUnmounted() {
+
+    }
+
+    @Override
+    public void onMediaEject() {
+
+    }
+
+    @Override
+    protected void onFollow(){
+        double stop = 0.0;
+        mService.setGaz((float) stop);
+    }
+
+    @Override
+    protected void onCameraSwitch(){
+        mService.switchCamera();
     }
 }

@@ -218,8 +218,8 @@ public class MediaActivity extends ParrotActivity
             if (Build.VERSION.SDK_INT < 11) {
                 mediaWorkerTask.execute().get();
             } else {
-                mediaWorkerTask.executeOnExecutor(GetMediaObjectsListTask.THREAD_POOL_EXECUTOR).get(); 
-            }
+                mediaWorkerTask.executeOnExecutor(GetMediaObjectsListTask.THREAD_POOL_EXECUTOR).get();
+        }
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
