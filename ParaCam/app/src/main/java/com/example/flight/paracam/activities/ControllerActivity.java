@@ -108,6 +108,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         System.loadLibrary("avdevice");
         System.loadLibrary("glfix");
         System.loadLibrary("adfreeflight");
+        System.loadLibrary("opencv_java3");
     }
 
     @Override

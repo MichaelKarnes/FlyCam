@@ -50,7 +50,7 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ui_controller);
+        setContentView(R.layout.opencv_adapter_ui);
 
         context = this;
         renderer = new VideoStageRenderer(context, null);
