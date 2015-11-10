@@ -450,6 +450,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         }
         else if(v.getId() == R.id.leftstick){
             running = false;
+            mService.setGaz(0);
             Log.d("Controller Activity:", "Left Joystick RELEASED!!!!");
         }
     }
