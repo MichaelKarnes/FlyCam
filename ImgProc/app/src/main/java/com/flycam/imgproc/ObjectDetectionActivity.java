@@ -56,8 +56,8 @@ public class ObjectDetectionActivity extends Activity implements CvCameraViewLis
 
     private Mat                     mDetectionFrame;
     private long                    prevTime;
-    private double                  detectionFps = 1;
-    private double                  detectionSizeRatio = 0.3;
+    private double                  detectionFps = 30;
+    private double                  detectionSizeRatio = 1;
 
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -104,6 +104,12 @@ public class ObjectDetectionActivity extends Activity implements CvCameraViewLis
     }
 
     private void onNativeLibraryLoaded() {
+        /*Size _winSize = new Size(64, 128);
+        Size _blockSize = new Size(16, 16);
+        Size _blockStride = new Size(8, 8);
+        Size _cellSize = new Size(8, 8);
+        int _nbins = 9;
+        descriptor = new HOGDescriptor(_winSize, _blockSize, _blockStride, _cellSize, _nbins);*/
         descriptor = new HOGDescriptor();
         descriptor.setSVMDetector(HOGDescriptor.getDefaultPeopleDetector());
 
@@ -161,63 +167,65 @@ public class ObjectDetectionActivity extends Activity implements CvCameraViewLis
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-
-        final int viewMode = mViewMode;
         long fpsPeriod = (long) (1000000000 / detectionFps);
-        if(System.nanoTime() - prevTime < fpsPeriod)
+        if(fpsPeriod > System.nanoTime() - prevTime)
             return mRgba;
-        //Log.d(TAG, "period " + fpsPeriod + " currGap: " + (System.nanoTime() - prevTime));
         prevTime = System.nanoTime();
 
-//        switch (viewMode) {
-//            case VIEW_MODE_GRAY:
-//                // input frame has gray scale format
-//                mRgba = inputFrame.gray();
-//                break;
-//            case VIEW_MODE_RGBA:
-//                // input frame has RBGA format
-//                mRgba = inputFrame.rgba();
-//                break;
-//            case VIEW_MODE_CANNY:
-//                // input frame has gray scale format
-//                mRgba = inputFrame.rgba();
-//                Imgproc.Canny(inputFrame.gray(), mIntermediateMat, 80, 100);
-//                Imgproc.cvtColor(mIntermediateMat, mRgba, Imgproc.COLOR_GRAY2RGBA, 4);
-//                break;
-//            case VIEW_MODE_FEATURES:
-//                // input frame has RGBA format
-//                mRgba = inputFrame.rgba();
-//                mGray = inputFrame.gray();
-//                FindFeatures(mGray.getNativeObjAddr(), mRgba.getNativeObjAddr());
-//                break;
-//        }
+        final int viewMode = mViewMode;
+
+        switch (viewMode) {
+            case VIEW_MODE_GRAY:
+                // input frame has gray scale format
+                mRgba = inputFrame.gray();
+                break;
+            case VIEW_MODE_RGBA:
+                // input frame has RBGA format
+                mRgba = inputFrame.rgba();
+                break;
+            case VIEW_MODE_CANNY:
+                // input frame has gray scale format
+                mRgba = inputFrame.rgba();
+                Imgproc.Canny(inputFrame.gray(), mIntermediateMat, 80, 100);
+                Imgproc.cvtColor(mIntermediateMat, mRgba, Imgproc.COLOR_GRAY2RGBA, 4);
+                break;
+            case VIEW_MODE_FEATURES:
+                // input frame has RGBA format
+                mRgba = inputFrame.rgba();
+                mGray = inputFrame.gray();
+                FindFeatures(mGray.getNativeObjAddr(), mRgba.getNativeObjAddr());
+                break;
+        }
+
+        Rect[] locationsArr = new Rect[0];
 
         // Detection
-        if(descriptor != null) {
-            Imgproc.cvtColor(inputFrame.rgba(), mDetectionFrame, Imgproc.COLOR_RGB2GRAY, 4);
+        if (descriptor != null) {
+            //Imgproc.cvtColor(inputFrame.rgba(), mDetectionFrame, Imgproc.COLOR_RGB2GRAY, 4);
+            mDetectionFrame = inputFrame.gray();
             Imgproc.resize(mDetectionFrame, mDetectionFrame, new Size(0, 0), detectionSizeRatio, detectionSizeRatio, Imgproc.INTER_LINEAR);
-            Log.d(TAG, "origFrame:" + inputFrame.gray().size().toString() + " resizedFrame:" + mDetectionFrame.size().toString());
+            //Log.d(TAG, "origFrame:" + inputFrame.gray().size().toString() + " resizedFrame:" + mDetectionFrame.size().toString());
             MatOfRect locations = new MatOfRect();
             MatOfDouble weights = new MatOfDouble();
-            descriptor.detectMultiScale(mDetectionFrame, locations, weights);
-            Log.d(TAG, Thread.currentThread().toString() + "locations: " + (int) (locations.size().width * locations.size().height));
-
-            Imgproc.cvtColor(mDetectionFrame, mDetectionFrame, Imgproc.COLOR_GRAY2RGB, 4);
-
-            Rect[] array = locations.toArray();
-            for (int j = 0; j < array.length; j++) {
-                Rect rect = array[j];
-                Imgproc.rectangle(mDetectionFrame, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 255, 0), 2);
-                Log.i("Locations", "Height " + rect.height + ", Width " + rect.width);
-            }
-
-            Imgproc.resize(mDetectionFrame, mRgba, new Size(mRgba.width(), mRgba.height()), 0, 0, Imgproc.INTER_LINEAR);
-
-
+            double hitThreshold = 0;
+            Size winStride = new Size(64, 64);
+            Size padding = new Size(0, 0);
+            double scale = 1.05;
+            double finalThreshold = 2;
+            boolean useMeanshiftGrouping = true;
+            descriptor.detectMultiScale(mDetectionFrame, locations, weights, hitThreshold, winStride, padding, scale, finalThreshold, useMeanshiftGrouping);
+            //descriptor.detectMultiScale(mDetectionFrame, locations, weights);
+            locationsArr = locations.toArray();
         }
-        else
-            mRgba = inputFrame.gray();
 
+        //Log.d(TAG, Thread.currentThread().toString() + "locations: " + (int) (locations.size().width * locations.size().height));
+        //Imgproc.cvtColor(mDetectionFrame, mDetectionFrame, Imgproc.COLOR_GRAY2RGB, 4);
+        //Imgproc.resize(mRgba, mRgba, new Size(mRgba.width(), mRgba.height()), 0, 0, Imgproc.INTER_LINEAR);
+        for (int j = 0; j < locationsArr.length; j++) {
+            Rect rect = locationsArr[j];
+            Imgproc.rectangle(mRgba, new Point(rect.x/detectionSizeRatio, rect.y/detectionSizeRatio), new Point((rect.x + rect.width)/detectionSizeRatio, (rect.y + rect.height)/detectionSizeRatio), new Scalar(0, 255, 0), 2);
+            //Log.i("Locations", "Height " + rect.height + ", Width " + rect.width);
+        }
 
         return mRgba;
     }
