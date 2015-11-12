@@ -6,4 +6,5 @@
     <string name="fly_button_text">Fly!</string>
     <string name="title_activity_ui_controller">ui_controller</string>
     <string name="title_activity_controller">ControllerActivity</string>
+    <string name="title_activity_main_ui">MainUI</string>
 </resources>

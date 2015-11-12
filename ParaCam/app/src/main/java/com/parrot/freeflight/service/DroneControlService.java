@@ -1051,4 +1051,9 @@ LocationListener
 	{
 		return usbActive;
 	}
+
+	public int getBatteryStatus(){
+		NavData data = droneProxy.getNavdata();
+		return data.batteryStatus;
+	}
 }

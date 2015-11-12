@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -378,5 +379,10 @@ implements ServiceConnection,
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void beginUI(View view) {
+        Intent intent = new Intent(this, MainUI.class);
+        startActivity(intent);
     }
 }

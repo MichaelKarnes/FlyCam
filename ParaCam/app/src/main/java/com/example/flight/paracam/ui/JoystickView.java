@@ -5,13 +5,14 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 public class JoystickView extends View implements Runnable {
 	// Constants
 	private final double RAD = 57.2957795;
-	public final static long DEFAULT_LOOP_INTERVAL = 100; // 100 ms
+	public final static long DEFAULT_LOOP_INTERVAL = 250; // 100 ms
 	public final static int FRONT = 3;
 	public final static int FRONT_RIGHT = 4;
 	public final static int RIGHT = 5;
@@ -56,12 +57,14 @@ public class JoystickView extends View implements Runnable {
 
 	protected void initJoystickView() {
 		mainCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
-		mainCircle.setColor(Color.WHITE);
-		mainCircle.setStyle(Paint.Style.FILL_AND_STROKE);
+		mainCircle.setColor(Color.GREEN);
+		mainCircle.setStyle(Paint.Style.STROKE);
+		mainCircle.setStrokeWidth(10);
 
 		secondaryCircle = new Paint();
 		secondaryCircle.setColor(Color.GREEN);
 		secondaryCircle.setStyle(Paint.Style.STROKE);
+		secondaryCircle.setStrokeWidth(3);
 
 		verticalLine = new Paint();
 		verticalLine.setStrokeWidth(5);
@@ -128,19 +131,14 @@ public class JoystickView extends View implements Runnable {
 		centerY = (getHeight()) / 2;
 
 		// painting the main circle
-		canvas.drawCircle((int) centerX, (int) centerY, joystickRadius,
-				mainCircle);
+		canvas.drawCircle((int) centerX, (int) centerY, joystickRadius,mainCircle);
 		// painting the secondary circle
 		canvas.drawCircle((int) centerX, (int) centerY, joystickRadius / 2,
 				secondaryCircle);
 		// paint lines
-		canvas.drawLine((float) centerX, (float) centerY, (float) centerX,
-				(float) (centerY - joystickRadius), verticalLine);
-		canvas.drawLine((float) (centerX - joystickRadius), (float) centerY,
-				(float) (centerX + joystickRadius), (float) centerY,
-				horizontalLine);
-		canvas.drawLine((float) centerX, (float) (centerY + joystickRadius),
-				(float) centerX, (float) centerY, horizontalLine);
+		//canvas.drawLine((float) centerX, (float) centerY, (float) centerX, (float) (centerY - joystickRadius), verticalLine);
+		//canvas.drawLine((float) (centerX - joystickRadius), (float) centerY, (float) (centerX + joystickRadius), (float) centerY, horizontalLine);
+		//canvas.drawLine((float) centerX, (float) (centerY + joystickRadius),(float) centerX, (float) centerY, horizontalLine);
 
 		// painting the move button
 		canvas.drawCircle(xPosition, yPosition, buttonRadius, button);
@@ -162,8 +160,9 @@ public class JoystickView extends View implements Runnable {
 			yPosition = (int) centerY;
 			thread.interrupt();
 			if (onJoystickMoveListener != null)
-				onJoystickMoveListener.onJoystickValueChanged(v, getAngle(), getPower(),
-						getDirection());
+				onJoystickMoveListener.onJoystickReleased(v);
+			//if (onJoystickMoveListener != null)
+				//onJoystickMoveListener.onJoystickValueChanged(v, getAngle(), getPower(), getDirection());
 		}
 		if (onJoystickMoveListener != null
 				&& event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -172,9 +171,9 @@ public class JoystickView extends View implements Runnable {
 			}
 			thread = new Thread(this);
 			thread.start();
-			if (onJoystickMoveListener != null)
-				onJoystickMoveListener.onJoystickValueChanged(v, getAngle(), getPower(),
-						getDirection());
+			onJoystickMoveListener.onJoystickPressed(v);
+			//if (onJoystickMoveListener != null)
+				//onJoystickMoveListener.onJoystickValueChanged(v, getAngle(), getPower(), getDirection());
 		}
 		return true;
 	}
@@ -252,6 +251,10 @@ public class JoystickView extends View implements Runnable {
 
 	public static interface OnJoystickMoveListener {
 		public void onJoystickValueChanged(View v, int angle, int power, int direction);
+
+		public void onJoystickReleased(View v);
+
+		public void onJoystickPressed(View v);
 	}
 
 	@Override
@@ -265,7 +268,7 @@ public class JoystickView extends View implements Runnable {
 				}
 			});
 			try {
-				Thread.sleep(loopInterval);
+				Thread.sleep(loopInterval,0);
 			} catch (InterruptedException e) {
 				break;
 			}
