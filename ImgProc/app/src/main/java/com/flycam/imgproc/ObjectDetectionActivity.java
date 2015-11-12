@@ -57,7 +57,7 @@ public class ObjectDetectionActivity extends Activity implements CvCameraViewLis
     private Mat                     mDetectionFrame;
     private long                    prevTime;
     private double                  detectionFps = 30;
-    private double                  detectionSizeRatio = 1;
+    private double                  detectionSizeRatio = 0.5;
 
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -208,10 +208,10 @@ public class ObjectDetectionActivity extends Activity implements CvCameraViewLis
             MatOfRect locations = new MatOfRect();
             MatOfDouble weights = new MatOfDouble();
             double hitThreshold = 0;
-            Size winStride = new Size(64, 64);
-            Size padding = new Size(0, 0);
+            Size winStride = new Size();
+            Size padding = new Size();
             double scale = 1.05;
-            double finalThreshold = 2;
+            double finalThreshold = 0;
             boolean useMeanshiftGrouping = true;
             descriptor.detectMultiScale(mDetectionFrame, locations, weights, hitThreshold, winStride, padding, scale, finalThreshold, useMeanshiftGrouping);
             //descriptor.detectMultiScale(mDetectionFrame, locations, weights);
