@@ -45,13 +45,15 @@
         <activity
             android:name=".activities.ControllerActivityBase"
             android:label="@string/title_activity_ui_controller"
-            android:screenOrientation="landscape" >
+            android:screenOrientation="landscape"
+            android:keepScreenOn="true" >
         </activity>
 
         <activity
             android:name=".activities.ControllerActivity"
             android:label="@string/title_activity_controller"
-            android:screenOrientation="landscape" >
+            android:screenOrientation="landscape"
+            android:keepScreenOn="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

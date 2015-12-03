@@ -21,12 +21,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
 import android.view.ViewGroup.LayoutParams;
 
 import com.example.flight.paracam.HudViewController;
 import com.example.flight.paracam.R;
+import com.example.flight.paracam.ui.DrawingView;
 import com.example.flight.paracam.ui.DroneCameraView;
 import com.example.flight.paracam.ui.DroneVideoView;
 import com.example.flight.paracam.ui.JoystickView;
@@ -56,6 +58,8 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.HOGDescriptor;
 
+import javax.microedition.khronos.opengles.GL10;
+
 public class ControllerActivityBase extends AppCompatActivity
 implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTouchListener, CvCameraViewListener2, GLBGVideoSprite.GLSpriteUpdateListener {
     public final String TAG = "ControllerActivityBase";
@@ -76,6 +80,7 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     private ImageView openCV_video;
 
     private GLSurfaceView glView;
+    protected DrawingView overlayView;
     protected VideoStageRenderer renderer;
     private Activity context;
 
@@ -196,6 +201,7 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
         record_button = (Button) findViewById(R.id.record_button);
         capture_photo = (Button) findViewById(R.id.capture_photo);
         switch_cam_btn = (Button) findViewById(R.id.switch_button);
+        overlayView = (DrawingView) findViewById(R.id.overlay_view);
         glView = (GLSurfaceView) findViewById(R.id.video_feed);
         glView.setEGLContextClientVersion(2);
         glView.setRenderer(renderer);
@@ -296,6 +302,14 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
 
     protected void onFollow(){
         renderer.setBitmapCapture(true);
+        //overlayView.setLayoutParams(new RelativeLayout.LayoutParams(320, 240));
+        //glView.setLayoutParams(new RelativeLayout.LayoutParams(320, 240));
+//        LayoutParams lp = glView.getLayoutParams();
+//        lp.width = 320;
+//        lp.height = 240;
+//        glView.setLayoutParams(lp);
+//
+//        renderer.onSurfaceChanged((GL10)null, 320, 240);
         //update_thread.start();
     }
 
@@ -366,7 +380,7 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
 
         // Detection
         if (descriptor != null) {
-            Imgproc.resize(mGray, mGray, new Size(0, 0), detectionSizeRatio, detectionSizeRatio, Imgproc.INTER_LINEAR);
+            //Imgproc.resize(mGray, mGray, new Size(0, 0), detectionSizeRatio, detectionSizeRatio, Imgproc.INTER_LINEAR);
             MatOfRect locations = new MatOfRect();
             MatOfDouble weights = new MatOfDouble();
             double hitThreshold = 1;

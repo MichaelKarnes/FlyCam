@@ -556,6 +556,10 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     public void onBitmapReady(Bitmap bp) {
         processBitmap(bp);
         Log.d(TAG, "xDelta = " + xDelta);
+
+        overlayView.xRatio = (float)(xDelta + 1) / 2;
+        overlayView.postInvalidate();
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
