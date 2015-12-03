@@ -1,72 +1,55 @@
 package com.example.flight.paracam.activities;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
-
-import java.io.File;
-import java.lang.Math;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import com.example.flight.paracam.DroneService;
-import com.example.flight.paracam.HudViewController;
-import com.example.flight.paracam.MainUI;
 import com.example.flight.paracam.R;
-import com.parrot.freeflight.drone.DroneAcademyMediaListener;
 import com.parrot.freeflight.drone.DroneConfig;
-import com.parrot.freeflight.drone.DroneProxy;
-import com.parrot.freeflight.drone.NavData;
 import com.parrot.freeflight.receivers.DroneAvailabilityDelegate;
 import com.parrot.freeflight.receivers.DroneAvailabilityReceiver;
+import com.parrot.freeflight.receivers.DroneBatteryChangedReceiver;
+import com.parrot.freeflight.receivers.DroneBatteryChangedReceiverDelegate;
 import com.parrot.freeflight.receivers.DroneCameraReadyActionReceiverDelegate;
 import com.parrot.freeflight.receivers.DroneCameraReadyChangeReceiver;
 import com.parrot.freeflight.receivers.DroneConnectionChangeReceiverDelegate;
 import com.parrot.freeflight.receivers.DroneConnectionChangedReceiver;
-import com.parrot.freeflight.receivers.DroneFlyingStateReceiver;
 import com.parrot.freeflight.receivers.DroneReadyReceiver;
 import com.parrot.freeflight.receivers.DroneReadyReceiverDelegate;
 import com.parrot.freeflight.receivers.DroneRecordReadyActionReceiverDelegate;
 import com.parrot.freeflight.receivers.DroneRecordReadyChangeReceiver;
 import com.parrot.freeflight.receivers.DroneVideoRecordStateReceiverDelegate;
 import com.parrot.freeflight.receivers.DroneVideoRecordingStateReceiver;
+import com.parrot.freeflight.receivers.MediaReadyDelegate;
+import com.parrot.freeflight.receivers.MediaReadyReceiver;
+import com.parrot.freeflight.receivers.MediaStorageReceiverDelegate;
 import com.parrot.freeflight.receivers.NetworkChangeReceiver;
 import com.parrot.freeflight.receivers.NetworkChangeReceiverDelegate;
 import com.parrot.freeflight.service.DroneControlService;
 import com.parrot.freeflight.service.intents.DroneStateManager;
 import com.parrot.freeflight.tasks.CheckDroneNetworkAvailabilityTask;
-import com.parrot.freeflight.receivers.DroneBatteryChangedReceiver;
-import com.parrot.freeflight.receivers.DroneBatteryChangedReceiverDelegate;
-import com.parrot.freeflight.tasks.GetMediaObjectsListTask;
 import com.parrot.freeflight.transcodeservice.TranscodingService;
-import com.parrot.freeflight.receivers.MediaReadyDelegate;
-import com.parrot.freeflight.receivers.MediaReadyReceiver;
-import com.parrot.freeflight.receivers.MediaStorageReceiver;
-import com.parrot.freeflight.receivers.MediaStorageReceiverDelegate;
-import com.parrot.freeflight.vo.MediaVO;
+import com.parrot.freeflight.video.VideoStageRenderer;
 
-import android.support.v4.content.LocalBroadcastManager;
+import java.io.File;
 
 public class ControllerActivity extends ControllerActivityBase implements ServiceConnection,
         DroneAvailabilityDelegate,
@@ -74,7 +57,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         DroneConnectionChangeReceiverDelegate,
         DroneReadyReceiverDelegate, DroneBatteryChangedReceiverDelegate, DroneVideoRecordStateReceiverDelegate, DroneCameraReadyActionReceiverDelegate, DroneRecordReadyActionReceiverDelegate,
         MediaReadyDelegate,
-        MediaStorageReceiverDelegate {
+        MediaStorageReceiverDelegate, VideoStageRenderer.BitmapReadyListener {
 
     public static final String TAG = ControllerActivity.class.getSimpleName();
 
@@ -98,6 +81,12 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     private boolean prevRecording;
     private boolean running;
 
+    //private HumanRecognitionThread human_recognition;
+
+    private double leftDelta = 0;
+    private double rightDelta = 0;
+
+    private int test = 0;
 
     static {
         System.loadLibrary("avutil");
@@ -116,6 +105,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         Log.d(TAG, "onCreate()");
 
         super.onCreate(savedInstanceState);
+        renderer.bitmap_listener = this;
 
         if (isFinishing()) {
             return;
@@ -131,6 +121,8 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        //human_recognition = new HumanRecognitionThread();
     }
 
     public void clickFunc(View view) {
@@ -330,15 +322,16 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         }
     }
 
-    public void onServiceConnected(ComponentName name, IBinder service)
-    {
+    public void onServiceConnected(ComponentName name, IBinder service){
         Log.d(TAG, "DroneService CONNECTED via CONTROLLER ACTIVITY!!!!!!!!");
         mService = (DroneService)((DroneControlService.LocalBinder) service).getService();
         mService.setMagnetoEnabled(true);
 
-        if(mService != null)
+        if(mService != null) {
+            mService.resume();
             mService.requestDroneStatus();
 
+        }
         runTranscoding();
     }
 
@@ -407,10 +400,11 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     @Override
     protected void onTakeOff_or_Land() {
         super.onTakeOff_or_Land();
-        if (isFinishing()) {
+        if(isFinishing()){
             return;
         }
-        mService.triggerTakeOff();
+        if(mService!=null)
+            mService.triggerTakeOff();
     }
 
     @Override
@@ -419,12 +413,13 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         double vertical = (Math.cos(radian_angle)*power)/100;
         double horizontal = (Math.sin(radian_angle)*power)/100;
 
-        if(running){
+        //if(running){
             if (mService != null){
                 mService.setGaz((float) vertical);
                 mService.setYaw((float) horizontal);
+                Log.d(TAG, "Vertical = " + vertical);
             }
-        }
+        //}
     }
 
     @Override
@@ -433,12 +428,12 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         double vertical = (Math.cos(radian_angle)*power)/100;
         double horizontal = (Math.sin(radian_angle) * power)/ 100;
 
-        if(running){
+        //if(running){
             if (mService != null) {
                 mService.setRoll((float) horizontal);
                 mService.setPitch((float) -vertical);
             }
-        }
+        //}
     }
 
     @Override
@@ -452,7 +447,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         else if(v.getId() == R.id.leftstick){
             running = false;
             mService.setGaz(0);
-            Log.d("Controller Activity:", "Left Joystick RELEASED!!!!");
+            mService.setYaw(0);
         }
     }
 
@@ -464,6 +459,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
                 mService.setProgressiveCommandEnabled(true);
                 break;
             case R.id.leftstick:
+                //mService.setProgressiveCommandEnabled(false);
                 break;
         }
     }
@@ -471,6 +467,12 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     @Override
     protected void onCapturePhoto(){
         mService.takePhoto();
+    }
+
+    @Override
+    protected void onFollow(){
+        super.onFollow();
+        //human_recognition.start();
     }
 
     @Override
@@ -543,13 +545,73 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     }
 
     @Override
-    protected void onFollow(){
-        double stop = 0.0;
-        mService.setGaz((float) stop);
-    }
-
-    @Override
     protected void onCameraSwitch(){
         mService.switchCamera();
     }
+
+    private long lastServiceCalledTime = 0;
+    private long serviceCommandIntervalMillis = 750;
+
+    @Override
+    public void onBitmapReady(Bitmap bp) {
+        processBitmap(bp);
+        Log.d(TAG, "xDelta = " + xDelta);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                record_button.setText("" + xDelta);
+            }
+        });
+
+        long now = System.currentTimeMillis();
+
+        boolean canCallService = (now - lastServiceCalledTime) > serviceCommandIntervalMillis;
+
+        if(humanDetected){
+            //if(xDelta > 0.1 || xDelta < -0.1)
+
+            //if (canCallService) {
+                mService.setYaw((float) (xDelta * 0.5));
+
+                lastServiceCalledTime = System.currentTimeMillis();
+            //}
+        }
+
+        else //if (canCallService)
+            mService.setYaw(0);
+    }
+
+
+//    class HumanRecognitionThread extends Thread{
+//        public void run(){
+//            while(true){
+//                if(frameReady){
+//                    updateInfo();
+//                    if(humanDetected){
+//                        if(xDelta > 100){
+//                            Log.d(TAG, "Moving Right: " + xDelta);
+//                            mService.setYaw((float) 0.1);
+//                        }
+//
+//                        if(xDelta < -100){
+//                            Log.d(TAG, "Moving Left: " + xDelta);
+//                            mService.setYaw((float) -0.1);
+//                        }
+////                        else if(rightDelta > 100){
+////                            Log.d(TAG, "rightDelta: " + rightDelta);
+////                            mService.setYaw((float) -0.1);
+////                        }
+//
+//                        else
+//                            mService.setYaw(0);
+//                    }
+//                    else
+//                        mService.setYaw(0);
+//
+//                    frameReady = false;
+//                }
+//            }
+//        }
+//    }
+
 }

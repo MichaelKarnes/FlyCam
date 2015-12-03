@@ -13,7 +13,7 @@ public class GLBGVideoSprite extends GLSprite
 
 	private android.graphics.Matrix matrix;
 	private Object videoFrameLock;
-	private Bitmap video;
+	public Bitmap video;
 	private float videoSize[]  = {0,0, //image width, height
 			0,0}; //
 	public int screenWidth;
@@ -29,20 +29,28 @@ public class GLBGVideoSprite extends GLSprite
 	private int x;
 	private int y;
 
+	public GLSpriteUpdateListener listener;
+
+	public interface GLSpriteUpdateListener {
+		void onFrameUpdated ();
+	}
 
 	public GLBGVideoSprite(Resources resources)
 	{
 		super(resources, null);
 		videoFrameLock = new Object();
-		video = Bitmap.createBitmap(512, 512, Bitmap.Config.RGB_565);
+		video = Bitmap.createBitmap(1080, 960, Bitmap.Config.RGB_565);
 	}
 
+	public Bitmap getCurrentBitMap(){
+		return super.getVideo();
+	}
 
 	@Override
 	protected void onUpdateTexture()
 	{
 		if (onUpdateVideoTextureNative(program, textures[0]) && (prevImgWidth != imageWidth || prevImgHeight != imageHeight)) {
-			if (!isVideoReady) {
+				if (!isVideoReady) {
 				isVideoReady = true;
 			}
 
@@ -54,6 +62,10 @@ public class GLBGVideoSprite extends GLSprite
 
 			prevImgWidth = imageWidth;
 			prevImgHeight = imageHeight;
+		}
+
+		if(listener != null) {
+			listener.onFrameUpdated();
 		}
 	}
 
@@ -73,8 +85,8 @@ public class GLBGVideoSprite extends GLSprite
 	@Override
 	public void onDraw(GL10 gl, float x, float y)
 	{   if (!isVideoReady) {
-		GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-	}
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+		}
 
 		super.onDraw(gl, this.x, this.y);
 	}

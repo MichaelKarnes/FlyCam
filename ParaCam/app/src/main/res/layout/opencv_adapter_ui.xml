@@ -112,10 +112,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/logo"
-        android:src="@drawable/launcher_logo"
         android:layout_above="@+id/batteryPercent"
         android:layout_centerHorizontal="true"
-        android:layout_below="@+id/video_feed" />
+        android:layout_below="@+id/video_feed"
+        android:src="@drawable/launcher_logo"/>
 
     <Button
         android:layout_width="wrap_content"
@@ -141,6 +141,16 @@
         android:layout_alignParentStart="true"
         android:layout_toLeftOf="@+id/video_feed"
         android:layout_toStartOf="@+id/video_feed" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/openCV_video"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/takeoffbutton"
+        android:layout_above="@+id/logo"
+        android:layout_toLeftOf="@+id/follow_button"
+        android:layout_toStartOf="@+id/follow_button" />
 
 
 </RelativeLayout>

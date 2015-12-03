@@ -7,6 +7,10 @@
 
 package com.parrot.freeflight.video;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
@@ -18,12 +22,16 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.opengl.GLES20;
+import android.opengl.GLException;
 import android.opengl.GLSurfaceView.Renderer;
+import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
 import com.parrot.freeflight.ui.gl.GLBGVideoSprite;
 import com.parrot.freeflight.ui.hud.Sprite;
+
+import org.opencv.ml.Boost;
 
 public class VideoStageRenderer implements Renderer {
 
@@ -43,6 +51,15 @@ public class VideoStageRenderer implements Renderer {
 
 	private int program;
 
+	private Bitmap video;
+	private Boolean captureBitmap;
+
+	private int count;
+
+	private Canvas can;
+	private boolean canInitialized;
+
+	public BitmapReadyListener bitmap_listener;
 
 	private final String vertexShaderCode =
 			"uniform mat4 uMVPMatrix;   \n" +
@@ -69,8 +86,11 @@ public class VideoStageRenderer implements Renderer {
 
 	private long endTime;
 
-	//***********************
+	public interface BitmapReadyListener{
+		public void onBitmapReady(Bitmap bp);
+	}
 
+	//***********************
 
 	public VideoStageRenderer(Context context, Bitmap initialTexture)
 	{
@@ -86,7 +106,10 @@ public class VideoStageRenderer implements Renderer {
 		}
 
 		idSpriteMap = new Hashtable<Integer, Sprite>();
+		canInitialized = false;
 		sprites = new ArrayList<Sprite>(4);
+		captureBitmap = false;
+		count = 0;
 	}
 
 
@@ -100,13 +123,14 @@ public class VideoStageRenderer implements Renderer {
 		}
 	}
 
-
-
 	public Sprite getSprite(Integer id)
 	{
 		return idSpriteMap.get(id);
 	}
 
+	public GLBGVideoSprite getBgSprite(){
+		return bgSprite;
+	}
 
 	public void removeSprite(Integer id)
 	{
@@ -119,6 +143,13 @@ public class VideoStageRenderer implements Renderer {
 		}
 	}
 
+	public int getScreenWidth(){
+		return screenWidth;
+	}
+
+	public int getScreenHeight(){
+		return screenWidth;
+	}
 
 	public void onDrawFrame(Canvas canvas)
 	{
@@ -176,6 +207,21 @@ public class VideoStageRenderer implements Renderer {
 				}
 			}
 		}
+
+		if(captureBitmap){
+			double startTime = System.currentTimeMillis();
+			video = createBitmapFromGLSurface(0, 0, screenWidth, screenHeight, gl);
+			double totalTime = System.currentTimeMillis() - startTime;
+			Log.d("VideoStageRenderer", "TIME TAKEN FOR BITMAP CREATION = " + totalTime);
+			Log.d("VideoStageRenderer", "Bitmap " + count + " Created!!!!");
+			count += 1;
+			bitmap_listener.onBitmapReady(video);
+		}
+
+	}
+
+	public void setGLSpriteListener(GLBGVideoSprite.GLSpriteUpdateListener listener) {
+		bgSprite.listener = listener;
 	}
 
 
@@ -283,5 +329,91 @@ public class VideoStageRenderer implements Renderer {
 
 			sprites.clear();
 		}
+	}
+
+	private Bitmap createBitmapFromGLSurface(int x, int y, int w, int h, GL10 gl)
+			throws OutOfMemoryError {
+		int bitmapBuffer[] = new int[w * h];
+		int bitmapSource[] = new int[w * h];
+		IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
+		intBuffer.position(0);
+
+		try {
+			gl.glReadPixels(x, y, w, h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, intBuffer);
+			int offset1, offset2;
+			for (int i = 0; i < h; i++) {
+				offset1 = i * w;
+				offset2 = (h - i - 1) * w;
+				for (int j = 0; j < w; j++) {
+					int texturePixel = bitmapBuffer[offset1 + j];
+					int blue = (texturePixel >> 16) & 0xff;
+					int red = (texturePixel << 16) & 0x00ff0000;
+					int pixel = (texturePixel & 0xff00ff00) | red | blue;
+					bitmapSource[offset2 + j] = pixel;
+				}
+			}
+		} catch (GLException e) {
+			return null;
+		}
+
+		return Bitmap.createBitmap(bitmapSource, w, h, Bitmap.Config.ARGB_8888);
+
+
+//		int width = w;
+//		int height = h;
+//		int screenshotSize = width * height;
+//		ByteBuffer bb = ByteBuffer.allocateDirect(screenshotSize * 4);
+//		bb.order(ByteOrder.nativeOrder());
+//		gl.glReadPixels(0, 0, width, height, GL10.GL_RGBA,
+//				GL10.GL_UNSIGNED_BYTE, bb);
+//		int pixelsBuffer[] = new int[screenshotSize];
+//		bb.asIntBuffer().get(pixelsBuffer);
+//		bb = null;
+//		Bitmap bitmap = Bitmap.createBitmap(width, height,
+//				Bitmap.Config.RGB_565);
+//		bitmap.setPixels(pixelsBuffer, screenshotSize - width, -width, 0,
+//				0, width, height);
+//		pixelsBuffer = null;
+//
+//		short sBuffer[] = new short[screenshotSize];
+//		ShortBuffer sb = ShortBuffer.wrap(sBuffer);
+//		bitmap.copyPixelsToBuffer(sb);
+//
+//		// Making created bitmap (from OpenGL points) compatible with
+//		// Android bitmap
+//		for (int i = 0; i < screenshotSize; i++) {
+//			short v = sBuffer[i];
+//			sBuffer[i] = (short) (((v & 0x1f) << 11) | (v & 0x7e0) | ((v & 0xf800) >> 11));
+//		}
+//
+//		sb.rewind();
+//		bitmap.copyPixelsFromBuffer(sb);
+//		Bitmap bp = bitmap.copy(Bitmap.Config.ARGB_8888,false);
+//		return bp;
+
+	}
+
+	public Bitmap getVideo(){
+		return video;
+	}
+
+	public int getNum(){
+		return count;
+	}
+
+	public Bitmap getVideoObject(){
+		return video;
+	}
+
+	public int getWidth(){
+		return screenWidth;
+	}
+
+	public int getHeight(){
+		return screenHeight;
+	}
+
+	public void setBitmapCapture(Boolean b){
+		captureBitmap = b;
 	}
 }

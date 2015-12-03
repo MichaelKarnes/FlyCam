@@ -11,6 +11,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -26,6 +27,7 @@ import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.parrot.freeflight.utils.TextureUtils;
@@ -54,6 +56,7 @@ public class GLSprite
     public float alpha;
 
     public Bitmap texture;
+    public Bitmap video;
     private Paint currPaint;
 
     protected boolean readyToDraw;
@@ -340,6 +343,8 @@ public class GLSprite
         }
 
         checkGlError("glDrawElements");
+
+        video = getBitMap(520, 520, gl);
     }
 
 
@@ -412,5 +417,62 @@ public class GLSprite
     public boolean isReadyToDraw()
     {
         return readyToDraw;
+    }
+
+    public Bitmap getBitMap(int w, int h, GL10 gl){
+        int width = w;
+        int height = h;
+        int screenshotSize = width * height;
+        ByteBuffer bb = ByteBuffer.allocateDirect(screenshotSize * 4);
+        bb.order(ByteOrder.nativeOrder());
+        gl.glReadPixels(0, 0, width, height, GL10.GL_RGBA,
+                GL10.GL_UNSIGNED_BYTE, bb);
+        int pixelsBuffer[] = new int[screenshotSize];
+        bb.asIntBuffer().get(pixelsBuffer);
+        bb = null;
+        Bitmap bitmap = Bitmap.createBitmap(width, height,
+                Bitmap.Config.RGB_565);
+        bitmap.setPixels(pixelsBuffer, screenshotSize - width, -width, 0,
+                0, width, height);
+        pixelsBuffer = null;
+
+        short sBuffer[] = new short[screenshotSize];
+        ShortBuffer sb = ShortBuffer.wrap(sBuffer);
+        bitmap.copyPixelsToBuffer(sb);
+
+        // Making created bitmap (from OpenGL points) compatible with
+        // Android bitmap
+        for (int i = 0; i < screenshotSize; ++i) {
+            short v = sBuffer[i];
+            sBuffer[i] = (short) (((v & 0x1f) << 11) | (v & 0x7e0) | ((v & 0xf800) >> 11));
+        }
+        sb.rewind();
+        bitmap.copyPixelsFromBuffer(sb);
+        Bitmap bp = bitmap.copy(Bitmap.Config.ARGB_8888,false);
+        return bp;
+    }
+
+
+//        final int mWidth = 512;
+//        final int mHeight = 512;
+//        IntBuffer ib = IntBuffer.allocate(mWidth * mHeight);
+//        IntBuffer ibt = IntBuffer.allocate(mWidth * mHeight);
+//        gl.glReadPixels(0, 0, mWidth, mHeight, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, ib);
+//
+//        // Convert upside down mirror-reversed image to right-side up normal
+//        // image.
+//        for (int i = 0; i < mHeight; i++) {
+//            for (int j = 0; j < mWidth; j++) {
+//                ibt.put((mHeight - i - 1) * mWidth + j, ib.get(i * mWidth + j));
+//            }
+//        }
+//
+//        Bitmap mBitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
+//        mBitmap.copyPixelsFromBuffer(ibt);
+//
+//        return mBitmap;
+
+    public Bitmap getVideo(){
+        return video;
     }
 }
