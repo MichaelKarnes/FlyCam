@@ -23,6 +23,7 @@ import android.view.View;
 
 import com.example.flight.paracam.DroneService;
 import com.example.flight.paracam.R;
+import com.example.flight.paracam.RelativeRect;
 import com.parrot.freeflight.drone.DroneConfig;
 import com.parrot.freeflight.receivers.DroneAvailabilityDelegate;
 import com.parrot.freeflight.receivers.DroneAvailabilityReceiver;
@@ -48,6 +49,16 @@ import com.parrot.freeflight.service.intents.DroneStateManager;
 import com.parrot.freeflight.tasks.CheckDroneNetworkAvailabilityTask;
 import com.parrot.freeflight.transcodeservice.TranscodingService;
 import com.parrot.freeflight.video.VideoStageRenderer;
+
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.HOGDescriptor;
 
 import java.io.File;
 
@@ -83,10 +94,20 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
     //private HumanRecognitionThread human_recognition;
 
-    private double leftDelta = 0;
-    private double rightDelta = 0;
+    private RelativeRect mRect;
 
-    private int test = 0;
+    private int height = 240;
+    private int width = 320;
+
+    private Mat mRgba;
+    private Mat mGray;
+    private Mat mDetectionFrame;
+    private Bitmap processedBitmap;
+    private HOGDescriptor           descriptor;
+
+    public boolean frameReady = false;
+
+    private float detectionSizeRatio = 0.5f;
 
     static {
         System.loadLibrary("avutil");
@@ -121,6 +142,16 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        mRgba = new Mat(height, width, CvType.CV_8UC3);
+        mGray = new Mat(height, width, CvType.CV_8UC1);
+        mDetectionFrame = new Mat((int)(height * detectionSizeRatio), (int) (width * detectionSizeRatio), CvType.CV_8UC1);
+        processedBitmap = Bitmap.createBitmap(1280, 960, Bitmap.Config.ARGB_8888);
+
+        System.loadLibrary("opencv_java3");
+        onNativeLibraryLoaded();
+
+        mRect = new RelativeRect(0, 0, 0, 0);
 
         //human_recognition = new HumanRecognitionThread();
     }
@@ -552,6 +583,21 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     private long lastServiceCalledTime = 0;
     private long serviceCommandIntervalMillis = 750;
 
+    ///////////////////////////////////////////////////////////
+    // IMAGE PROCESSING ///////////////////////////////////////
+    ///////////////////////////////////////////////////////////
+
+    private void onNativeLibraryLoaded() {
+        /*Size _winSize = new Size(64, 128);
+        Size _blockSize = new Size(16, 16);
+        Size _blockStride = new Size(8, 8);
+        Size _cellSize = new Size(8, 8);
+        int _nbins = 9;
+        descriptor = new HOGDescriptor(_winSize, _blockSize, _blockStride, _cellSize, _nbins);*/
+        descriptor = new HOGDescriptor();
+        descriptor.setSVMDetector(HOGDescriptor.getDefaultPeopleDetector());
+    }
+
     @Override
     public void onBitmapReady(Bitmap bp) {
         processBitmap(bp);
@@ -583,6 +629,61 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
         else //if (canCallService)
             mService.setYaw(0);
+    }
+
+
+    public void processBitmap(Bitmap inputBitmap){
+        double startTime = System.currentTimeMillis();
+        renderer.setBitmapCapture(false);
+        Rect[] locationsArr = new Rect[0];
+
+        Utils.bitmapToMat(inputBitmap, mRgba);
+
+        Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_RGB2GRAY, 4);
+
+        // Detection
+        if (descriptor != null) {
+            //Imgproc.resize(mGray, mGray, new Size(0, 0), detectionSizeRatio, detectionSizeRatio, Imgproc.INTER_LINEAR);
+            MatOfRect locations = new MatOfRect();
+            MatOfDouble weights = new MatOfDouble();
+            double hitThreshold = 1;
+            Size winStride = new Size();
+            Size padding = new Size();
+            double scale = 1.05;
+            double finalThreshold = 0;
+            boolean useMeanshiftGrouping = true;
+            descriptor.detectMultiScale(mGray, locations, weights, hitThreshold, winStride, padding, scale, finalThreshold, useMeanshiftGrouping);
+            //descriptor.detectMultiScale(mDetectionFrame, locations, weights);
+            locationsArr = locations.toArray();
+        }
+
+        for (int j = 0; j < locationsArr.length; j++) {
+            Rect rect = locationsArr[j];
+            double p2x = rect.x + rect.width;
+            double p2y = rect.y + rect.height;
+            Log.d(TAG, "HUMAN DETECTED!!!!!!!");
+//            Log.d(TAG, "Rect (" + rect.x + "," + rect.y + ") " + "(" + p2x + "," + p2y + ")");
+
+            if(j==0){
+                xDelta = (double) ((rect.x + rect.width/2) - mGray.width()/2)/(mGray.width()/2);
+            }
+
+//            Log.d(TAG, "Rectangle: Height " + rect.height + ", Width " + rect.width);
+//            Log.d(TAG, "Matrix: Height " + mGray.height() + ", Width " + mGray.width());
+        }
+
+        if(locationsArr.length == 0){
+            humanDetected = false;
+            xDelta = 0;
+        }
+        else
+            humanDetected = true;
+
+        Log.d(TAG, "FRAME PROCESSED!!!!!!");
+        frameReady = true;
+        renderer.setBitmapCapture(true);
+        double timeProcessed = System.currentTimeMillis() - startTime;
+        Log.d(TAG, "TIME TAKEN FOR IMAGE PROCESS = " + timeProcessed);
     }
 
 

@@ -84,64 +84,13 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
     protected VideoStageRenderer renderer;
     private Activity context;
 
-    //private UpdateVideoThread update_thread;
 
-    private boolean needToUpdate = false;
-
-    private Mat mRgba;
-    private Mat mGray;
-    private HOGDescriptor           descriptor;
-    public boolean nativeLibraryLoaded = false;
-    private double                  detectionFps = 30;
-    private double                  detectionSizeRatio = 0.5;
-
-    private int height = 960;
-    private int width = 1280;
-
-    private Bitmap processedBitmap;
 
     public double leftDelta = 0;
     public double rightDelta = 0;
     public double xDelta = 0;
     public boolean humanDetected = false;
 
-    private double detectionRatio = 0.5;
-    private Mat mDetectionFrame;
-
-    public boolean frameReady = false;
-
-    private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                    Log.i(TAG, "OpenCV loaded successfully");
-
-                    // Load native library after(!) OpenCV initialization
-                    System.loadLibrary("opencv_java3");
-                    onNativeLibraryLoaded();
-                } break;
-                default:
-                {
-                    super.onManagerConnected(status);
-                } break;
-            }
-        }
-    };
-
-    private void onNativeLibraryLoaded() {
-        /*Size _winSize = new Size(64, 128);
-        Size _blockSize = new Size(16, 16);
-        Size _blockStride = new Size(8, 8);
-        Size _cellSize = new Size(8, 8);
-        int _nbins = 9;
-        descriptor = new HOGDescriptor(_winSize, _blockSize, _blockStride, _cellSize, _nbins);*/
-        descriptor = new HOGDescriptor();
-        descriptor.setSVMDetector(HOGDescriptor.getDefaultPeopleDetector());
-
-        nativeLibraryLoaded = true;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,13 +108,7 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
         initUI();
         initListeners();
 
-        mRgba = new Mat(height, width, CvType.CV_8UC3);
-        mGray = new Mat(height, width, CvType.CV_8UC1);
-        mDetectionFrame = new Mat((int)(height * detectionSizeRatio), (int) (width * detectionSizeRatio), CvType.CV_8UC1);
-        processedBitmap = Bitmap.createBitmap(1280, 960, Bitmap.Config.ARGB_8888);
 
-        System.loadLibrary("opencv_java3");
-        onNativeLibraryLoaded();
     }
 
     @Override
@@ -366,62 +309,8 @@ implements View.OnClickListener, JoystickView.OnJoystickMoveListener, View.OnTou
 
     public void onFrameUpdated() {
 //        Log.d("ControllerBase", "Listener called");
-        needToUpdate = true;
     }
 
-    public void processBitmap(Bitmap inputBitmap){
-        double startTime = System.currentTimeMillis();
-        renderer.setBitmapCapture(false);
-        Rect[] locationsArr = new Rect[0];
-
-        Utils.bitmapToMat(inputBitmap, mRgba);
-
-        Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_RGB2GRAY, 4);
-
-        // Detection
-        if (descriptor != null) {
-            //Imgproc.resize(mGray, mGray, new Size(0, 0), detectionSizeRatio, detectionSizeRatio, Imgproc.INTER_LINEAR);
-            MatOfRect locations = new MatOfRect();
-            MatOfDouble weights = new MatOfDouble();
-            double hitThreshold = 1;
-            Size winStride = new Size();
-            Size padding = new Size();
-            double scale = 1.05;
-            double finalThreshold = 0;
-            boolean useMeanshiftGrouping = true;
-            descriptor.detectMultiScale(mGray, locations, weights, hitThreshold, winStride, padding, scale, finalThreshold, useMeanshiftGrouping);
-            //descriptor.detectMultiScale(mDetectionFrame, locations, weights);
-            locationsArr = locations.toArray();
-        }
-
-        for (int j = 0; j < locationsArr.length; j++) {
-            Rect rect = locationsArr[j];
-            double p2x = rect.x + rect.width;
-            double p2y = rect.y + rect.height;
-            Log.d(TAG, "HUMAN DETECTED!!!!!!!");
-//            Log.d(TAG, "Rect (" + rect.x + "," + rect.y + ") " + "(" + p2x + "," + p2y + ")");
-
-            if(j==0){
-                xDelta = (double) ((rect.x + rect.width/2) - mGray.width()/2)/(mGray.width()/2);
-            }
-
-//            Log.d(TAG, "Rectangle: Height " + rect.height + ", Width " + rect.width);
-//            Log.d(TAG, "Matrix: Height " + mGray.height() + ", Width " + mGray.width());
-        }
-
-        if(locationsArr.length == 0){
-            humanDetected = false;
-            xDelta = 0;
-        }
-        else
-            humanDetected = true;
-
-        Log.d(TAG, "FRAME PROCESSED!!!!!!");
-        frameReady = true;
-        renderer.setBitmapCapture(true);
-        double timeProcessed = System.currentTimeMillis() - startTime;
-        Log.d(TAG, "TIME TAKEN FOR IMAGE PROCESS = " + timeProcessed);
-    }
 
 //    class UpdateVideoThread extends Thread{
 //
