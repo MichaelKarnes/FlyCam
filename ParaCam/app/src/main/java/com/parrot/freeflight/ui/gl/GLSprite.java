@@ -344,7 +344,7 @@ public class GLSprite
 
         checkGlError("glDrawElements");
 
-        video = getBitMap(520, 520, gl);
+        //video = getBitMap(520, 520, gl);
     }
 
 
@@ -418,39 +418,39 @@ public class GLSprite
     {
         return readyToDraw;
     }
-
-    public Bitmap getBitMap(int w, int h, GL10 gl){
-        int width = w;
-        int height = h;
-        int screenshotSize = width * height;
-        ByteBuffer bb = ByteBuffer.allocateDirect(screenshotSize * 4);
-        bb.order(ByteOrder.nativeOrder());
-        gl.glReadPixels(0, 0, width, height, GL10.GL_RGBA,
-                GL10.GL_UNSIGNED_BYTE, bb);
-        int pixelsBuffer[] = new int[screenshotSize];
-        bb.asIntBuffer().get(pixelsBuffer);
-        bb = null;
-        Bitmap bitmap = Bitmap.createBitmap(width, height,
-                Bitmap.Config.RGB_565);
-        bitmap.setPixels(pixelsBuffer, screenshotSize - width, -width, 0,
-                0, width, height);
-        pixelsBuffer = null;
-
-        short sBuffer[] = new short[screenshotSize];
-        ShortBuffer sb = ShortBuffer.wrap(sBuffer);
-        bitmap.copyPixelsToBuffer(sb);
-
-        // Making created bitmap (from OpenGL points) compatible with
-        // Android bitmap
-        for (int i = 0; i < screenshotSize; ++i) {
-            short v = sBuffer[i];
-            sBuffer[i] = (short) (((v & 0x1f) << 11) | (v & 0x7e0) | ((v & 0xf800) >> 11));
-        }
-        sb.rewind();
-        bitmap.copyPixelsFromBuffer(sb);
-        Bitmap bp = bitmap.copy(Bitmap.Config.ARGB_8888,false);
-        return bp;
-    }
+//
+//    public Bitmap getBitMap(int w, int h, GL10 gl){
+//        int width = w;
+//        int height = h;
+//        int screenshotSize = width * height;
+//        ByteBuffer bb = ByteBuffer.allocateDirect(screenshotSize * 4);
+//        bb.order(ByteOrder.nativeOrder());
+//        gl.glReadPixels(0, 0, width, height, GL10.GL_RGBA,
+//                GL10.GL_UNSIGNED_BYTE, bb);
+//        int pixelsBuffer[] = new int[screenshotSize];
+//        bb.asIntBuffer().get(pixelsBuffer);
+//        bb = null;
+//        Bitmap bitmap = Bitmap.createBitmap(width, height,
+//                Bitmap.Config.RGB_565);
+//        bitmap.setPixels(pixelsBuffer, screenshotSize - width, -width, 0,
+//                0, width, height);
+//        pixelsBuffer = null;
+//
+//        short sBuffer[] = new short[screenshotSize];
+//        ShortBuffer sb = ShortBuffer.wrap(sBuffer);
+//        bitmap.copyPixelsToBuffer(sb);
+//
+//        // Making created bitmap (from OpenGL points) compatible with
+//        // Android bitmap
+//        for (int i = 0; i < screenshotSize; ++i) {
+//            short v = sBuffer[i];
+//            sBuffer[i] = (short) (((v & 0x1f) << 11) | (v & 0x7e0) | ((v & 0xf800) >> 11));
+//        }
+//        sb.rewind();
+//        bitmap.copyPixelsFromBuffer(sb);
+//        Bitmap bp = bitmap.copy(Bitmap.Config.ARGB_8888,false);
+//        return bp;
+//    }
 
 
 //        final int mWidth = 512;
