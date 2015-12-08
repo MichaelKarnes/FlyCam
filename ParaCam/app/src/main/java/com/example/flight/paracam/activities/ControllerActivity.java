@@ -151,7 +151,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         System.loadLibrary("opencv_java3");
         onNativeLibraryLoaded();
 
-        mRect = new RelativeRect(0, 0, 0, 0);
+        mRect = new RelativeRect(0.2f, 0.3f, 0.4f, 0.5f);
 
         //human_recognition = new HumanRecognitionThread();
     }
@@ -602,17 +602,6 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
     public void onBitmapReady(Bitmap bp) {
         processBitmap(bp);
         Log.d(TAG, "xDelta = " + xDelta);
-
-        overlayView.xRatio = (float)(xDelta + 1) / 2;
-        overlayView.postInvalidate();
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                record_button.setText("" + xDelta);
-            }
-        });
-
         long now = System.currentTimeMillis();
 
         boolean canCallService = (now - lastServiceCalledTime) > serviceCommandIntervalMillis;
@@ -623,12 +612,26 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
             //if (canCallService) {
                 mService.setYaw((float) (xDelta * 0.5));
 
-                lastServiceCalledTime = System.currentTimeMillis();
+            lastServiceCalledTime = System.currentTimeMillis();
             //}
         }
 
         else //if (canCallService)
             mService.setYaw(0);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                record_button.setText("" + xDelta);
+            }
+        });
+
+        overlayView.xRatio = (float) (xDelta + 1) / 2;
+        if(!humanDetected) {
+            mRect.width = 0;
+            mRect.height = 0;
+        }
+        overlayView.mRect = mRect;
+        overlayView.postInvalidate();
     }
 
 
@@ -666,6 +669,7 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
 
             if(j==0){
                 xDelta = (double) ((rect.x + rect.width/2) - mGray.width()/2)/(mGray.width()/2);
+                mRect.configFromRect(rect, mGray.width(), mGray.height());
             }
 
 //            Log.d(TAG, "Rectangle: Height " + rect.height + ", Width " + rect.width);
@@ -685,38 +689,5 @@ public class ControllerActivity extends ControllerActivityBase implements Servic
         double timeProcessed = System.currentTimeMillis() - startTime;
         Log.d(TAG, "TIME TAKEN FOR IMAGE PROCESS = " + timeProcessed);
     }
-
-
-//    class HumanRecognitionThread extends Thread{
-//        public void run(){
-//            while(true){
-//                if(frameReady){
-//                    updateInfo();
-//                    if(humanDetected){
-//                        if(xDelta > 100){
-//                            Log.d(TAG, "Moving Right: " + xDelta);
-//                            mService.setYaw((float) 0.1);
-//                        }
-//
-//                        if(xDelta < -100){
-//                            Log.d(TAG, "Moving Left: " + xDelta);
-//                            mService.setYaw((float) -0.1);
-//                        }
-////                        else if(rightDelta > 100){
-////                            Log.d(TAG, "rightDelta: " + rightDelta);
-////                            mService.setYaw((float) -0.1);
-////                        }
-//
-//                        else
-//                            mService.setYaw(0);
-//                    }
-//                    else
-//                        mService.setYaw(0);
-//
-//                    frameReady = false;
-//                }
-//            }
-//        }
-//    }
 
 }
